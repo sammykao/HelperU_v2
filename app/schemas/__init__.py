@@ -90,7 +90,6 @@ from .chat import (
     ChatMarkReadRequest,
     ChatWithParticipantsResponse,
     ChatParticipantInfo,
-    WebSocketMessage,
     WebSocketChatMessage,
     WebSocketReadReceipt
 )
@@ -197,7 +196,6 @@ __all__ = [
     "ChatMarkReadRequest",
     "ChatWithParticipantsResponse",
     "ChatParticipantInfo",
-    "WebSocketMessage",
     "WebSocketChatMessage",
     "WebSocketReadReceipt",
     

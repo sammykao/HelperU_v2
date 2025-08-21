@@ -37,12 +37,8 @@ class ChatService:
             # Verify both participants exist
             await self._verify_users_exist([user_id, participant_id])
 
-            # Create new chat with users array
-            chat_data = {
-                "users": [str(user_id), str(participant_id)]
-            }
-
-            result = self.admin_client.table("chats").insert(chat_data).execute()
+            # Create new chat (no users array dependency)
+            result = self.admin_client.table("chats").insert({}).execute()
             
             if not result.data:
                 raise HTTPException(
@@ -51,6 +47,13 @@ class ChatService:
                 )
 
             chat = result.data[0]
+            # Insert participants in chat_users (authoritative)
+            self.admin_client.table("chat_users").insert([
+                {"chat_id": chat["id"], "user_id": str(user_id)},
+                {"chat_id": chat["id"], "user_id": str(participant_id)}
+            ]).execute()
+
+            chat['users'] = [user_id, participant_id]
             return ChatResponse(**chat)
 
         except HTTPException:
@@ -62,43 +65,21 @@ class ChatService:
             )
 
     async def get_user_chats(self, user_id: UUID) -> ChatListResponse:
-        """Get all chats for a user"""
+        """Get all chats for a user in one query using chat_users join."""
         try:
-            # Get chats where user is a participant
-            query = f"""
-                SELECT 
-                    c.*,
-                    m.content as last_message,
-                    m.created_at as last_message_at,
-                    COALESCE(
-                        (SELECT COUNT(*) FROM messages 
-                         WHERE chat_id = c.id 
-                         AND sender_id != '{user_id}' 
-                         AND read_at IS NULL), 0
-                    ) as unread_count
-                FROM chats c
-                LEFT JOIN LATERAL (
-                    SELECT content, created_at 
-                    FROM messages 
-                    WHERE chat_id = c.id 
-                    ORDER BY created_at DESC 
-                    LIMIT 1
-                ) m ON true
-                WHERE '{user_id}' = ANY(c.users)
-                ORDER BY COALESCE(m.created_at, c.created_at) DESC
-            """
+            result = (self.admin_client.table("chats")
+                .select("id,created_at,updated_at, participants:chat_users(user_id), membership:chat_users!inner(user_id)")
+                .eq("membership.user_id", str(user_id))
+                .order("updated_at", desc=True)
+                .execute())
 
-            result = self.admin_client.rpc("exec_sql", {"query": query}).execute()
-            
             if not result.data:
                 return ChatListResponse(chats=[], total=0)
 
             chats = []
-            for chat_data in result.data:
-                # Convert users back to UUID list
-                chat_data["users"] = [UUID(uid) for uid in chat_data["users"]]
-                chat = ChatResponse(**chat_data)
-                chats.append(chat)
+            for row in result.data:
+                chat['users'] = [UUID(p["user_id"]) for p in row.get("participants") or []]
+                chats.append(ChatResponse(**chat))
 
             return ChatListResponse(chats=chats, total=len(chats))
 
@@ -113,19 +94,20 @@ class ChatService:
     async def get_chat_with_participants(self, chat_id: UUID, user_id: UUID) -> ChatWithParticipantsResponse:
         """Get chat with participant information"""
         try:
-            # Get chat and verify user is participant
-            chat_result = self.admin_client.table("chats").select("*").eq("id", str(chat_id)).execute()
-            
-            if not chat_result.data:
+            # Single query: fetch chat with embedded participants, verify membership locally
+            result = (self.admin_client.table("chats")
+                .select("id,created_at,updated_at, participants:chat_users(user_id)")
+                .eq("id", str(chat_id))
+                .limit(1)
+                .execute())
+            if not result.data:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
 
-            chat = chat_result.data[0]
-            users = [UUID(uid) for uid in chat["users"]]
-            
-            # Verify user is participant
+            row = result.data[0]
+            users = [UUID(p["user_id"]) for p in (row.get("participants") or [])]
             if user_id not in users:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -142,11 +124,11 @@ class ChatService:
             last_message_data = await self._get_last_message_and_unread_count(chat_id, user_id)
 
             return ChatWithParticipantsResponse(
-                id=chat["id"],
+                id=row["id"],
                 users=users,
                 participants=participants,
-                created_at=chat["created_at"],
-                updated_at=chat["updated_at"],
+                created_at=row["created_at"],
+                updated_at=row["updated_at"],
                 last_message=last_message_data.get("last_message"),
                 last_message_at=last_message_data.get("last_message_at"),
                 unread_count=last_message_data.get("unread_count", 0)
@@ -163,32 +145,39 @@ class ChatService:
     async def send_message(self, chat_id: UUID, sender_id: UUID, request: MessageCreateRequest) -> MessageResponse:
         """Send a new message in a chat"""
         try:
-            # Verify user is participant in chat
-            chat_result = self.admin_client.table("chats").select("users").eq("id", str(chat_id)).execute()
-            
-            if not chat_result.data:
+            # Verify user is participant in chat via chat_users and get sender chat_user id
+            cu_result = (self.admin_client.table("chat_users")
+                .select("id,user_id")
+                .eq("chat_id", str(chat_id))
+                .execute())
+            if not cu_result.data:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
-
-            chat = chat_result.data[0]
-            users = [UUID(uid) for uid in chat["users"]]
-            
-            if sender_id not in users:
+            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
+            if sender_id not in participant_user_ids:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"
                 )
+            sender_chat_user_id = None
+            for row in cu_result.data:
+                if row["user_id"] == str(sender_id):
+                    sender_chat_user_id = row["id"]
+                    break
+            if sender_chat_user_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Sender not in chat"
+                )
 
             # Create message
-            message_data = {
+            result = self.admin_client.table("messages").insert({
                 "chat_id": str(chat_id),
-                "sender_id": str(sender_id),
+                "sender_id": str(sender_chat_user_id),
                 "content": request.content
-            }
-
-            result = self.admin_client.table("messages").insert(message_data).execute()
+            }).execute()
             
             if not result.data:
                 raise HTTPException(
@@ -197,6 +186,8 @@ class ChatService:
                 )
 
             message = result.data[0]
+            # Normalize sender_id back to user_id for API response
+            message["sender_id"] = str(sender_id)
             
             # Update chat updated_at timestamp
             self.admin_client.table("chats").update({"updated_at": datetime.utcnow().isoformat()}).eq("id", str(chat_id)).execute()
@@ -205,7 +196,7 @@ class ChatService:
             if self.openphone_service:
                 try:
                     # Get the other participant's ID
-                    other_participant_id = next(uid for uid in users if uid != sender_id)
+                    other_participant_id = next(uid for uid in participant_user_ids if uid != sender_id)
                     
                     # Get participant info for the notification
                     other_participant_info = await self._get_participant_info(str(other_participant_id))
@@ -237,27 +228,26 @@ class ChatService:
     async def get_chat_messages(self, chat_id: UUID, user_id: UUID, limit: int = 50, offset: int = 0) -> MessageListResponse:
         """Get messages for a specific chat"""
         try:
-            # Verify user is participant in chat
-            chat_result = self.admin_client.table("chats").select("users").eq("id", str(chat_id)).execute()
-            
-            if not chat_result.data:
+            # Verify user is participant in chat via chat_users
+            cu_result = (self.admin_client.table("chat_users")
+                .select("id,user_id")
+                .eq("chat_id", str(chat_id))
+                .execute())
+            if not cu_result.data:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
-
-            chat = chat_result.data[0]
-            users = [UUID(uid) for uid in chat["users"]]
-            
-            if user_id not in users:
+            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
+            if user_id not in participant_user_ids:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"
                 )
 
-            # Get messages with pagination
+            # Get messages with pagination, embed sender user_id, and return total count together
             result = (self.admin_client.table("messages")
-                .select("*")
+                .select("id,chat_id,content,read_at,created_at,updated_at,sender:chat_users(user_id)", count="exact")
                 .eq("chat_id", str(chat_id))
                 .order("created_at", desc=True)
                 .range(offset, offset + limit - 1)
@@ -266,19 +256,18 @@ class ChatService:
             if not result.data:
                 return MessageListResponse(messages=[], total=0, has_more=False)
 
-            # Get total count
-            count_result = (self.admin_client.table("messages")
-                .select("id", count="exact")
-                .eq("chat_id", str(chat_id))
-                .execute())
-
-            total = count_result.count or 0
+            total = result.count or 0
             has_more = (offset + limit) < total
 
             # Convert to response models (reverse order for chronological display)
             messages = []
             for message_data in reversed(result.data):
-                message = MessageResponse(**message_data)
+                adjusted = dict(message_data)
+                # Normalize embedded sender object into sender_id
+                sender_obj = adjusted.pop("sender", None)
+                if sender_obj and sender_obj.get("user_id"):
+                    adjusted["sender_id"] = sender_obj["user_id"]
+                message = MessageResponse(**adjusted)
                 messages.append(message)
 
             return MessageListResponse(
@@ -298,19 +287,18 @@ class ChatService:
     async def mark_messages_read(self, chat_id: UUID, user_id: UUID, request: ChatMarkReadRequest) -> dict:
         """Mark messages as read"""
         try:
-            # Verify user is participant in chat
-            chat_result = self.admin_client.table("chats").select("users").eq("id", str(chat_id)).execute()
-            
-            if not chat_result.data:
+            # Verify user is participant in chat via chat_users
+            cu_result = (self.admin_client.table("chat_users")
+                .select("id,user_id")
+                .eq("chat_id", str(chat_id))
+                .execute())
+            if not cu_result.data:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
-
-            chat = chat_result.data[0]
-            users = [UUID(uid) for uid in chat["users"]]
-            
-            if user_id not in users:
+            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
+            if user_id not in participant_user_ids:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"
@@ -318,11 +306,22 @@ class ChatService:
 
             # Mark messages as read
             now = datetime.utcnow().isoformat()
+            # Determine current user's chat_user id to avoid marking own messages
+            current_cu_id = None
+            for row in cu_result.data:
+                if row["user_id"] == str(user_id):
+                    current_cu_id = row["id"]
+                    break
+            if current_cu_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="User not in chat"
+                )
             (self.admin_client.table("messages")
                 .update({"read_at": now})
                 .in_("id", [str(msg_id) for msg_id in request.message_ids])
                 .eq("chat_id", str(chat_id))
-                .neq("sender_id", str(user_id))
+                .neq("sender_id", str(current_cu_id))
                 .execute())
 
             return {
@@ -340,20 +339,19 @@ class ChatService:
             )
 
     async def _get_chat_by_participants(self, user_id: UUID, participant_id: UUID) -> Optional[ChatResponse]:
-        """Get existing chat between two users"""
+        """Get existing chat between two users with a single join on chat_users twice."""
         try:
-            # Check if chat exists with both users
+            # Join chat_users twice (aliases u1, u2) and pull all participants in one call
             result = (self.admin_client.table("chats")
-                .select("*")
-                .contains("users", [str(user_id), str(participant_id)])
+                .select("id,created_at,updated_at, participants:chat_users(user_id), u1:chat_users!inner(user_id), u2:chat_users!inner(user_id)")
+                .eq("u1.user_id", str(user_id))
+                .eq("u2.user_id", str(participant_id))
+                .limit(1)
                 .execute())
-
             if not result.data:
                 return None
-
             chat = result.data[0]
-            # Convert users back to UUID list
-            chat["users"] = [UUID(uid) for uid in chat["users"]]
+            chat['users'] = [UUID(p["user_id"]) for p in (chat.get("participants") or [])]
             return ChatResponse(**chat)
 
         except Exception:
@@ -447,15 +445,26 @@ class ChatService:
                 last_message = last_message_result.data[0]["content"]
                 last_message_at = last_message_result.data[0]["created_at"]
 
-            # Get unread count
-            unread_result = (self.admin_client.table("messages")
-                .select("id", count="exact")
+            # Get current user's chat_user id
+            current_cu = (self.admin_client.table("chat_users")
+                .select("id")
                 .eq("chat_id", str(chat_id))
-                .neq("sender_id", str(user_id))
-                .is_("read_at", "null")
+                .eq("user_id", str(user_id))
+                .limit(1)
                 .execute())
+            current_cu_id = current_cu.data[0]["id"] if current_cu.data else None
 
-            unread_count = unread_result.count or 0
+            # Get unread count excluding current user's messages
+            if current_cu_id is not None:
+                unread_result = (self.admin_client.table("messages")
+                    .select("id", count="exact")
+                    .eq("chat_id", str(chat_id))
+                    .is_("read_at", "null")
+                    .neq("sender_id", str(current_cu_id))
+                    .execute())
+                unread_count = unread_result.count or 0
+            else:
+                unread_count = 0
 
             return {
                 "last_message": last_message,
