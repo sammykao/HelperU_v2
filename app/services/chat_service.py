@@ -261,13 +261,12 @@ class ChatService:
 
             # Convert to response models (reverse order for chronological display)
             messages = []
-            for message_data in reversed(result.data):
-                adjusted = dict(message_data)
+            for message_data in reversed(result.data): 
                 # Normalize embedded sender object into sender_id
-                sender_obj = adjusted.pop("sender", None)
+                sender_obj = message_data.pop("sender", None)
                 if sender_obj and sender_obj.get("user_id"):
-                    adjusted["sender_id"] = sender_obj["user_id"]
-                message = MessageResponse(**adjusted)
+                    message_data["sender_id"] = sender_obj["user_id"]
+                message = MessageResponse(**message_data)
                 messages.append(message)
 
             return MessageListResponse(
@@ -380,14 +379,11 @@ class ChatService:
                 user_data = result.data[0]
                 return ChatParticipantInfo(**user_data)
 
-            # Fallback with minimal info
-            return ChatParticipantInfo(
-                id=UUID(user_id),
-                first_name="Unknown",
-                last_name="User",
-                pfp_url=None
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User {user_id} not found"
             )
-
+            
         except Exception:
             # Fallback with minimal info
             return ChatParticipantInfo(
