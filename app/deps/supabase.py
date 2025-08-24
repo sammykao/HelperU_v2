@@ -4,7 +4,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.services.supabase_client import get_public_supabase, get_admin_supabase
 from app.services.profile_service import ProfileService
-from app.services.account_service import AccountService
 from app.services.stripe_service import StripeService
 from app.services.task_service import TaskService
 from app.services.auth_service import AuthService
@@ -68,11 +67,6 @@ def get_auth_service()-> AuthService:
     admin_client = get_supabase_admin()
     return AuthService(public_client, admin_client)
 
-def get_account_service() -> AccountService:
-    """Dependency to get account service with Supabase admin client and Stripe service"""
-    admin_client = get_supabase_admin()
-    stripe_service = get_stripe_service()
-    return AccountService(admin_client, stripe_service)
 
 def get_task_service() -> TaskService:
     """Dependency to get task service with Supabase admin client"""

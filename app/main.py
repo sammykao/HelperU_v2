@@ -6,7 +6,6 @@ from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.profile import router as profile_router
 from app.api.v1.endpoints.subscriptions import router as subscriptions_router
 from app.api.v1.endpoints.tasks import router as tasks_router
-from app.api.v1.endpoints.account import router as account_router
 from app.api.v1.endpoints.applications import router as applications_router
 from app.api.v1.endpoints.helper import router as helper_router
 from app.api.v1.endpoints.chat import router as chat_router
@@ -23,7 +22,6 @@ app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(profile_router, prefix="/api/v1/profile", tags=["users"])
 app.include_router(subscriptions_router, prefix="/api/v1/subscriptions", tags=["subscriptions"])
 app.include_router(tasks_router, prefix="/api/v1/tasks", tags=["tasks"])
-app.include_router(account_router, prefix="/api/v1/account", tags=["account"])
 app.include_router(applications_router, prefix="/api/v1/applications", tags=["applications"])
 app.include_router(helper_router, prefix="/api/v1/helpers", tags=["helpers"])
 app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])

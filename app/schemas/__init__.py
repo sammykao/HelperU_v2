@@ -50,16 +50,7 @@ from .task import (
     TaskSearchListResponse
 )
 
-from .account import (
-    PasswordChangeRequest,
-    NotificationSettings,
-    AccountStats,
-    AccountProfileResponse,
-    PasswordChangeResponse,
-    NotificationSettingsResponse,
-    AccountActivityResponse,
-    AccountDeletionResponse
-)
+
 
 
 from .applications import (
@@ -160,15 +151,7 @@ __all__ = [
     "TaskListResponse",
     "TaskSearchListResponse",
     
-    # Account schemas
-    "PasswordChangeRequest",
-    "NotificationSettings",
-    "AccountStats",
-    "AccountProfileResponse",
-    "PasswordChangeResponse",
-    "NotificationSettingsResponse",
-    "AccountActivityResponse",
-    "AccountDeletionResponse",
+
 
     # Applications schemas
     "ApplicationResponse",

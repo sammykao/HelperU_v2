@@ -16,6 +16,7 @@ from app.schemas.auth import (
     HelperProfileResponse,
     HelperVerificationResponse,
     HelperVerificationWebhookData,
+    HelperEmailVerificationResponse,
     LogoutResponse,
     CurrentUser
 )
@@ -232,4 +233,70 @@ async def logout(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to logout: {str(e)}"
+        )
+
+
+@router.post("/resend-email-verification")
+async def resend_email_verification(
+    request: dict,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Resend email verification link"""
+    try:
+        email = request.get("email")
+        if not email:
+            raise HTTPException(status_code=400, detail="Email is required")
+        
+        result = await auth_service.resend_email_verification(email)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resend email verification: {str(e)}"
+        )
+
+
+@router.post("/verify-email-otp", response_model=OTPResponse)
+async def verify_email_otp(
+    request: dict,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Verify email using OTP code"""
+    try:
+        email = request.get("email")
+        otp_code = request.get("otp_code")
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="Email is required")
+        if not otp_code:
+            raise HTTPException(status_code=400, detail="OTP code is required")
+        
+        result = await auth_service.verify_email_otp(email, otp_code)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to verify email OTP: {str(e)}"
+        )
+
+
+@router.get("/helper/email-verification-status/{user_id}", response_model=HelperEmailVerificationResponse)
+async def check_helper_email_verification(
+    user_id: str,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Check if a helper's email is verified by user ID"""
+    try:
+        result = await auth_service.check_helper_email_verification(user_id)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to check email verification: {str(e)}"
         )

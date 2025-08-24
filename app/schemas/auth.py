@@ -100,6 +100,16 @@ class UserProfileStatusResponse(BaseModel):
     profile_data: Optional[dict] = None  # Will contain validated ClientProfileData or HelperProfileData
 
 
+class HelperEmailVerificationResponse(BaseModel):
+    """Response for helper email verification status"""
+    success: bool
+    email: str
+    email_verified: bool
+    email_verified_at: Optional[str] = None
+    user_id: str
+    message: str
+
+
 # New response models to replace Dict[str, Any]
 
 class OTPResponse(BaseModel):
@@ -129,6 +139,8 @@ class HelperProfileResponse(BaseModel):
     success: bool
     message: str
     user_id: Optional[str] = None
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
 
 
 class HelperVerificationResponse(BaseModel):
