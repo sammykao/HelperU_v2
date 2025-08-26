@@ -22,6 +22,42 @@ class ProfileService:
         try:
             # Check if user is client or helper
             client_result = self.admin_client.table("clients").select("*").eq("id", user_id).execute()
+            helper_result = self.admin_client.table("helpers").select("*").eq("id", user_id).execute()
+            
+            # Check if user exists in both tables (shared auth)
+            if client_result.data and helper_result.data:
+                client_data = ClientProfileData(**client_result.data[0])
+                helper_data = HelperProfileData(**helper_result.data[0])
+                
+                # Determine primary user type based on profile completion
+                client_completed = bool(client_data.first_name and client_data.last_name)
+                helper_completed = bool(helper_data.first_name and helper_data.last_name)
+                
+                # Return the more complete profile as primary, but indicate both exist
+                if helper_completed and not client_completed:
+                    return UserProfileStatusResponse(
+                        user_type="helper",
+                        profile_completed=helper_completed,
+                        email_verified=True,
+                        phone_verified=True,
+                        profile_data=helper_data.model_dump(),
+                        is_shared_auth=True,
+                        has_client_profile=True,
+                        has_helper_profile=True
+                    )
+                else:
+                    return UserProfileStatusResponse(
+                        user_type="client",
+                        profile_completed=client_completed,
+                        email_verified=False,
+                        phone_verified=True,
+                        profile_data=client_data.model_dump(),
+                        is_shared_auth=True,
+                        has_client_profile=True,
+                        has_helper_profile=True
+                    )
+            
+            # Check if user is only a clientT
             if client_result.data:
                 client_data = ClientProfileData(**client_result.data[0])
                 return UserProfileStatusResponse(
@@ -32,7 +68,6 @@ class ProfileService:
                     profile_data=client_data.model_dump()
                 )
 
-            helper_result = self.admin_client.table("helpers").select("*").eq("id", user_id).execute()
             if helper_result.data:
                 helper_data = HelperProfileData(**helper_result.data[0])
                 return UserProfileStatusResponse(
