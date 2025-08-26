@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 class UserProfileStatusResponse(BaseModel):
     """Response for user profile status"""
@@ -25,8 +26,8 @@ class ClientProfileData(BaseModel):
     phone: Optional[str] = None
     pfp_url: Optional[str] = None
     number_of_posts: Optional[int] = 0
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 class HelperProfileData(BaseModel):
@@ -42,8 +43,8 @@ class HelperProfileData(BaseModel):
     zip_code: Optional[str] = None
     pfp_url: Optional[str] = None
     number_of_applications: Optional[int] = 0
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 class ProfileUpdateData(BaseModel):

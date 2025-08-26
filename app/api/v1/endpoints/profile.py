@@ -23,6 +23,7 @@ async def get_user_profile(
         elif profile_status.user_type == "helper":
             profile = await profile_service.get_helper_profile(current_user.id)
         else:
+            # Both user types; no concrete profile to return
             profile = None
         
         return {

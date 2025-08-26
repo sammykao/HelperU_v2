@@ -28,34 +28,14 @@ class ProfileService:
             if client_result.data and helper_result.data:
                 client_data = ClientProfileData(**client_result.data[0])
                 helper_data = HelperProfileData(**helper_result.data[0])
-                
-                # Determine primary user type based on profile completion
-                client_completed = bool(client_data.first_name and client_data.last_name)
-                helper_completed = bool(helper_data.first_name and helper_data.last_name)
-                
-                # Return the more complete profile as primary, but indicate both exist
-                if helper_completed and not client_completed:
-                    return UserProfileStatusResponse(
-                        user_type="helper",
-                        profile_completed=helper_completed,
-                        email_verified=True,
-                        phone_verified=True,
-                        profile_data=helper_data.model_dump(),
-                        is_shared_auth=True,
-                        has_client_profile=True,
-                        has_helper_profile=True
-                    )
-                else:
-                    return UserProfileStatusResponse(
-                        user_type="client",
-                        profile_completed=client_completed,
-                        email_verified=False,
-                        phone_verified=True,
-                        profile_data=client_data.model_dump(),
-                        is_shared_auth=True,
-                        has_client_profile=True,
-                        has_helper_profile=True
-                    )
+                return UserProfileStatusResponse(
+                    user_type="both",
+                    profile_completed=True,
+                    email_verified=True,
+                    phone_verified=True,
+                    profile_data={"client": client_data.model_dump(), "helper": helper_data.model_dump()}
+                )
+                    
             
             # Check if user is only a clientT
             if client_result.data:
