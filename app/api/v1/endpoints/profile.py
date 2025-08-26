@@ -18,17 +18,17 @@ async def get_user_profile(
     try:
         profile_status = await profile_service.get_user_profile_status(current_user.id)
         
-        if profile_status["user_type"] == "client":
+        if profile_status.user_type == "client":
             profile = await profile_service.get_client_profile(current_user.id)
-        elif profile_status["user_type"] == "helper":
+        elif profile_status.user_type == "helper":
             profile = await profile_service.get_helper_profile(current_user.id)
         else:
             profile = None
         
         return {
             "success": True,
-            "profile_status": profile_status,
-            "profile": profile
+            "profile_status": profile_status.model_dump(),
+            "profile": profile.model_dump() if profile else None
         }
 
     except HTTPException:
@@ -50,7 +50,7 @@ async def update_client_profile(
     try:
         # Verify user is actually a client
         profile_status = await profile_service.get_user_profile_status(current_user.id)
-        if profile_status["user_type"] != "client":
+        if profile_status.user_type != "client":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only clients can update client profiles"
@@ -84,7 +84,7 @@ async def update_helper_profile(
     try:
         # Verify user is actually a helper
         profile_status = await profile_service.get_user_profile_status(current_user.id)
-        if profile_status["user_type"] != "helper":
+        if profile_status.user_type != "helper":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only helpers can update helper profiles"
@@ -122,7 +122,7 @@ async def get_profile_status(
         profile_status = await profile_service.get_user_profile_status(current_user.id)
         return {
             "success": True,
-            "profile_status": profile_status
+            "profile_status": profile_status.model_dump()
         }
     except HTTPException:
         raise

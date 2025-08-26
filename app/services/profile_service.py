@@ -98,7 +98,7 @@ class ProfileService:
         """Update helper profile"""
         try:
             # Convert Pydantic model to dict, excluding None values
-            update_data = profile_data.dict(exclude_unset=True)
+            update_data = profile_data.model_dump(exclude_unset=True)
             result = self.admin_client.table("helpers").update(update_data).eq("id", user_id).execute()
             
             if result.data:

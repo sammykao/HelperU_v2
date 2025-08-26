@@ -35,13 +35,14 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
                 detail="Invalid or expired token"
             )
         
+
         return CurrentUser(
             id=user.user.id,
             email=user.user.email,
             phone=user.user.phone,
-            email_confirmed_at=user.user.email_confirmed_at,
-            phone_confirmed_at=user.user.phone_confirmed_at,
-            created_at=user.user.created_at
+            email_confirmed_at=user.user.email_confirmed_at.isoformat() if user.user.email_confirmed_at else None,
+            phone_confirmed_at=user.user.phone_confirmed_at.isoformat() if user.user.phone_confirmed_at else None,
+            created_at=user.user.created_at.isoformat() if user.user.created_at else None
         )
     except HTTPException:
         raise
