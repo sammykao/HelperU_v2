@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.deps.supabase import get_current_user, get_task_service
 from app.services.task_service import TaskService
 from app.schemas.task import (
+    PublicTaskResponse,
     TaskCreate,
     TaskResponse,
     TaskUpdate,
@@ -155,15 +156,11 @@ async def complete_task(
         )
 
 
-# task_service: TaskService = Depends(get_task_service)
-@router.get("/fetch_available_tasks")
-async def get_available_tasks():
+@router.get("/fetch_available_tasks", response_model=PublicTaskResponse)
+async def get_available_tasks(task_service: TaskService = Depends(get_task_service)):
     """Fetch available tasks for display"""
     try:
-        print("here before being called")
-        # return await task_service.get_available_tasks()
-
-        return None
+        return await task_service.get_available_tasks()
     except HTTPException:
         raise
     except Exception as e:

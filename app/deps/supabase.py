@@ -1,3 +1,4 @@
+from app.services import stripe_service
 from supabase import Client
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -67,8 +68,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 def get_stripe_service() -> StripeService:
     """Dependency to get Stripe service"""
-    admin_client = get_supabase_admin()
-    return StripeService(admin_client)
+    # admin_client = get_supabase_admin()
+    return StripeService()
 
 
 def get_profile_service() -> ProfileService:

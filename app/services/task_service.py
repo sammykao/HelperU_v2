@@ -4,6 +4,7 @@ from fastapi import HTTPException
 
 import asyncio
 from app.schemas.task import (
+    PublicTask,
     PublicTaskResponse,
     TaskCreate,
     TaskResponse,
@@ -19,12 +20,9 @@ from app.services.stripe_service import StripeService
 class TaskService:
     """Service for handling task operations and business logic"""
 
-    def __init__(
-        self, admin_client: Client, public_client: Client, stripe_service: StripeService
-    ):
+    def __init__(self, admin_client: Client, stripe_service: StripeService):
         self.admin_client = admin_client
         self.stripe_service = stripe_service
-        self.public_client = public_client
 
     async def create_task(self, client_id: str, request: TaskCreate) -> TaskResponse:
         """Create a new task with validation"""
@@ -324,9 +322,8 @@ class TaskService:
     async def get_available_tasks(self) -> Optional[PublicTaskResponse]:
         try:
             # query non sensitive information from tasks table
-
             result = (
-                await self.admin_client.table("tasks")
+                self.admin_client.table("tasks")
                 .select(
                     "id, title, description, location_type, zip_code, hourly_rate, created_at"
                 )
@@ -339,7 +336,14 @@ class TaskService:
             if not result or not result.data:
                 return None
 
-            return PublicTaskResponse(**result.data)
+            tasks = [PublicTask(**task) for task in result.data]
+            response = PublicTaskResponse(
+                result=tasks,
+                limit=20,
+                total_count=len(tasks) if len(tasks) else 0,
+            )
+
+            return response
 
         except HTTPException:
             raise
@@ -348,5 +352,3 @@ class TaskService:
             raise HTTPException(
                 status_code=500, detail=f"Failed to fetch available tasks: {str(e)}"
             )
-
-
