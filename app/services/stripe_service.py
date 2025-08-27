@@ -1,6 +1,7 @@
 import stripe
 from app.core.config import settings
 from app.services.supabase_client import get_admin_supabase
+from supabase import Client
 from fastapi import HTTPException
 from datetime import datetime
 
@@ -15,8 +16,8 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 class StripeService:
-    def __init__(self):
-        self.admin_client = get_admin_supabase()
+    def __init__(self, admin_client: Client):
+        self.admin_client = admin_client
     
     async def create_customer(self, user_id: str, email: str, name: str) -> str:
         """Create a Stripe customer and store the ID in Supabase"""

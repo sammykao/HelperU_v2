@@ -10,7 +10,9 @@ from app.schemas.task import (
     TaskSearchResponse,
     TaskUpdate,
     TaskListResponse,
-    TaskSearchListResponse
+    TaskSearchListResponse,
+    PublicTask,
+    PublicTaskResponse
 )
 from app.services.stripe_service import StripeService
 
@@ -243,3 +245,36 @@ class TaskService:
             raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to update client post count: {str(e)}")
+
+    async def get_available_tasks(self) -> Optional[PublicTaskResponse]:
+        try:
+            # query non sensitive information from tasks table
+            result = (
+                self.admin_client.table("tasks")
+                .select(
+                    "id, title, description, location_type, zip_code, hourly_rate, created_at"
+                )
+                .is_("completed_at", None)
+                .order("created_at", desc=True)
+                .limit(20)
+                .execute()
+            )
+
+            if not result or not result.data:
+                return None
+
+            tasks = [PublicTask(**task) for task in result.data]
+            response = PublicTaskResponse(
+                result=tasks,
+                limit=20,
+                total_count=len(tasks) if len(tasks) else 0,
+            )
+
+            return response
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to fetch available tasks: {str(e)}"
+            )

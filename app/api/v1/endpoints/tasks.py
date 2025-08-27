@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.deps.supabase import get_current_user, get_task_service
 from app.services.task_service import TaskService
-from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate, TaskListResponse, TaskSearchRequest, TaskSearchListResponse
-from app.schemas.auth import CurrentUser
+from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate, TaskListResponse, TaskSearchRequest, TaskSearchListResponse, PublicTaskResponse
+from app.schemas.auth import CurrentUser    
 
 router = APIRouter()
 
@@ -28,7 +28,6 @@ async def create_task(
 @router.get("/", response_model=TaskSearchListResponse)
 async def get_tasks(
     search_request: TaskSearchRequest,
-    current_user: CurrentUser = Depends(get_current_user),
     task_service: TaskService = Depends(get_task_service)
 ):
     """Get tasks with pagination, filtering, and distance-based sorting"""
@@ -43,10 +42,46 @@ async def get_tasks(
         )
 
 
+@router.get("/fetch_available_tasks", response_model=PublicTaskResponse)
+async def get_available_tasks(task_service: TaskService = Depends(get_task_service)):
+    """Fetch available tasks for display"""
+    try:
+        return await task_service.get_available_tasks()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get available tasks: {str(e)}",
+        )
+
+
+@router.get("/my-tasks", response_model=TaskListResponse)
+async def get_my_tasks(
+    current_user: CurrentUser = Depends(get_current_user),
+    task_service: TaskService = Depends(get_task_service),
+    limit: int = 20,
+    offset: int = 0
+):
+    """Get current user's own tasks with pagination"""
+    try:
+        return await task_service.get_user_tasks(
+            user_id=current_user.id,
+            limit=limit,
+            offset=offset
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch tasks: {str(e)}"
+        )
+
+
 @router.get("/{task_id}", response_model=TaskResponse)
 async def get_task(
     task_id: str,
-    current_user: CurrentUser = Depends(get_current_user),
     task_service: TaskService = Depends(get_task_service)
 ):
     """Get a specific task by ID"""
@@ -111,27 +146,6 @@ async def update_task(
         )
 
 
-@router.get("/my-tasks", response_model=TaskListResponse)
-async def get_my_tasks(
-    current_user: CurrentUser = Depends(get_current_user),
-    task_service: TaskService = Depends(get_task_service),
-    limit: int = 20,
-    offset: int = 0
-):
-    """Get current user's own tasks with pagination"""
-    try:
-        return await task_service.get_user_tasks(
-            user_id=current_user.id,
-            limit=limit,
-            offset=offset
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch tasks: {str(e)}"
-        )
 
 
 @router.post("/{task_id}/complete", response_model=TaskResponse)
@@ -150,7 +164,4 @@ async def complete_task(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to complete task: {str(e)}"
         )
-
-        
-
 

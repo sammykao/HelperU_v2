@@ -104,3 +104,22 @@ class TaskSearchListResponse(BaseModel):
     total_count: int
     limit: int
     offset: int
+
+
+
+class PublicTask(BaseModel):
+    """Response model for fetching public facing tasks"""
+
+    id: str
+    title: str
+    description: str
+    location_type: str
+    zip_code: str
+    hourly_rate: int
+    created_at: str
+
+class PublicTaskResponse(BaseModel):
+    """Response model for a list of public facing tasks"""
+    result: List[PublicTask]
+    limit: int
+    total_count: int

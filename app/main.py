@@ -39,4 +39,9 @@ def root() -> dict:
         "version": "0.1.0",
         "docs": "/docs",
         "redoc": "/redoc"
-    } 
+    }
+
+@app.get("/test-public")
+def test_public() -> dict:
+    print("DEBUG: test-public endpoint called - no auth required")
+    return {"message": "This is a public test endpoint"} 
