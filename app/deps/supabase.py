@@ -12,6 +12,7 @@ from app.services.application_service import ApplicationService
 from app.services.chat_service import ChatService
 from app.services.openphone_service import OpenPhoneService
 from app.schemas.auth import CurrentUser
+
 security = HTTPBearer()
 
 
@@ -28,40 +29,54 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     try:
         public_client = get_public_supabase()
         user = public_client.auth.get_user(credentials.credentials)
-        
-        if not user or not user.user:
+
+        # if not user or not user.user:
+        if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token"
+                detail="Invalid or expired token",
             )
-        
+
         return CurrentUser(
             id=user.user.id,
             email=user.user.email,
             phone=user.user.phone,
-            email_confirmed_at=user.user.email_confirmed_at,
-            phone_confirmed_at=user.user.phone_confirmed_at,
-            created_at=user.user.created_at
+            email_confirmed_at=(
+                user.user.email_confirmed_at.isoformat()
+                if user.user.email_confirmed_at
+                else None
+            ),
+            phone_confirmed_at=(
+                user.user.phone_confirmed_at.isoformat()
+                if user.user.phone_confirmed_at
+                else None
+            ),
+            created_at=user.user.created_at.isoformat(),
+            # email_confirmed_at=user.user.email_confirmed_at,
+            # phone_confirmed_at=user.user.phone_confirmed_at,
+            # created_at=user.user.created_at,
         )
     except HTTPException:
         raise
     except Exception:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token"
         )
+
 
 def get_stripe_service() -> StripeService:
     """Dependency to get Stripe service"""
     admin_client = get_supabase_admin()
-    return StripeService(admin_client) 
+    return StripeService(admin_client)
+
 
 def get_profile_service() -> ProfileService:
     """Dependency to get profile service with Supabase admin client"""
     admin_client = get_supabase_admin()
     return ProfileService(admin_client)
-    
-def get_auth_service()-> AuthService:
+
+
+def get_auth_service() -> AuthService:
     """Dependency to get auth service with Supabase clients"""
     public_client = get_public_supabase()
     admin_client = get_supabase_admin()
@@ -74,10 +89,12 @@ def get_task_service() -> TaskService:
     stripe_service = get_stripe_service()
     return TaskService(admin_client, stripe_service)
 
+
 def get_helper_service() -> HelperService:
     """Dependency to get helper service with Supabase admin client"""
     admin_client = get_supabase_admin()
     return HelperService(admin_client)
+
 
 def get_application_service() -> ApplicationService:
     """Dependency to get application service with Supabase admin client and task service"""
@@ -97,3 +114,4 @@ def get_chat_service() -> ChatService:
 def get_openphone_service() -> OpenPhoneService:
     """Dependency to get OpenPhone service for SMS notifications"""
     return OpenPhoneService()
+
