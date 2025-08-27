@@ -2,7 +2,6 @@ from app.services import stripe_service
 from supabase import Client
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
 from app.services.supabase_client import get_public_supabase, get_admin_supabase
 from app.services.profile_service import ProfileService
 from app.services.stripe_service import StripeService
@@ -27,6 +26,7 @@ def get_supabase_admin() -> Client:
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Get current authenticated user from JWT token"""
+
     try:
         public_client = get_public_supabase()
         user = public_client.auth.get_user(credentials.credentials)
@@ -89,7 +89,8 @@ def get_task_service() -> TaskService:
     """Dependency to get task service with Supabase admin client"""
     admin_client = get_supabase_admin()
     stripe_service = get_stripe_service()
-    return TaskService(admin_client, stripe_service)
+    task_service = TaskService(admin_client, stripe_service)
+    return task_service
 
 
 def get_helper_service() -> HelperService:

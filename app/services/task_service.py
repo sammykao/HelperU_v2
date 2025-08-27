@@ -4,8 +4,6 @@ from fastapi import HTTPException
 
 import asyncio
 from app.schemas.task import (
-    PublicTask,
-    PublicTaskResponse,
     TaskCreate,
     TaskResponse,
     TaskSearchRequest,
@@ -13,6 +11,8 @@ from app.schemas.task import (
     TaskUpdate,
     TaskListResponse,
     TaskSearchListResponse,
+    PublicTask,
+    PublicTaskResponse,
 )
 from app.services.stripe_service import StripeService
 
@@ -348,7 +348,6 @@ class TaskService:
         except HTTPException:
             raise
         except Exception as e:
-            print(e)
             raise HTTPException(
                 status_code=500, detail=f"Failed to fetch available tasks: {str(e)}"
             )

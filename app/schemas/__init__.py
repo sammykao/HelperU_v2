@@ -47,7 +47,9 @@ from .task import (
     TaskSearchResponse,
     TaskUpdate,
     TaskListResponse,
-    TaskSearchListResponse
+    TaskSearchListResponse,
+    PublicTask,
+    PublicTaskResponse
 )
 
 
@@ -150,7 +152,8 @@ __all__ = [
     "TaskUpdate",
     "TaskListResponse",
     "TaskSearchListResponse",
-    
+    "PublicTask",
+    "PublicTaskResponse",
 
 
     # Applications schemas

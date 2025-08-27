@@ -30,7 +30,6 @@ app.include_router(
 )
 app.include_router(helper_router, prefix="/api/v1/helpers", tags=["helpers"])
 app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])
-app.include_router(public_router, prefix="/api/v1/public", tags=["public_routes"])
 
 
 @app.get("/healthz")
@@ -47,3 +46,8 @@ def root() -> dict:
         "redoc": "/redoc",
     }
 
+
+@app.get("/test-public")
+def test_public() -> dict:
+    print("DEBUG: test-public endpoint called - no auth required")
+    return {"message": "This is a public test endpoint"}
