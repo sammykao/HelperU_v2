@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional
+from datetime import datetime
 from app.utils.validators import validate_phone_number, normalize_phone_number
 
 
@@ -132,7 +133,7 @@ class HelperEmailVerificationResponse(BaseModel):
     success: bool
     email: str
     email_verified: bool
-    email_verified_at: Optional[str] = None
+    email_verified_at: Optional[datetime] = None
     user_id: str
     message: str
 
@@ -204,9 +205,9 @@ class CurrentUser(BaseModel):
     id: str
     email: Optional[str] = None
     phone: Optional[str] = None
-    email_confirmed_at: Optional[str] = None
-    phone_confirmed_at: Optional[str] = None
-    created_at: Optional[str] = None
+    email_confirmed_at: Optional[datetime] = None
+    phone_confirmed_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
 
 
 class HelperVerificationWebhookData(BaseModel):
@@ -215,12 +216,12 @@ class HelperVerificationWebhookData(BaseModel):
     id: Optional[str] = Field(None, description="User ID")
     sub: Optional[str] = Field(None, description="Alternative user ID field")
     email: Optional[str] = Field(None, description="User's email address")
-    email_confirmed_at: Optional[str] = Field(
+    email_confirmed_at: Optional[datetime] = Field(
         None, description="When email was confirmed"
     )
     phone: Optional[str] = Field(None, description="User's phone number")
     phone_number: Optional[str] = Field(None, description="Alternative phone field")
-    phone_confirmed_at: Optional[str] = Field(
+    phone_confirmed_at: Optional[datetime] = Field(
         None, description="When phone was confirmed"
     )
 

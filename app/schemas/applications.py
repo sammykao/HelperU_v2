@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
+from datetime import datetime
 from .helper import HelperResponse
 
 class ApplicationInfo(BaseModel):
@@ -9,8 +10,8 @@ class ApplicationInfo(BaseModel):
     helper_id: str
     introduction_message: str
     supplements_url: Optional[str] = Field(None, description="URL of supplements")
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         # This will ignore extra fields not defined in the schema

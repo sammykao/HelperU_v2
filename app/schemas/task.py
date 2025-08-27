@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional
+from datetime import datetime
 
 
 class TaskCreate(BaseModel):
@@ -32,9 +33,9 @@ class TaskResponse(BaseModel):
     description: str
     tools_info: str
     public_transport_info: str
-    completed_at: Optional[str] = None
-    created_at: str
-    updated_at: str
+    completed_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
 
 
 class TaskSearchRequest(BaseModel):
@@ -93,9 +94,9 @@ class TaskSearchResponse(BaseModel):
     description: str
     tools_info: str
     public_transport_info: str
-    completed_at: Optional[str] = None
-    created_at: str
-    updated_at: str
+    completed_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     distance: Optional[float] = Field(
         None, description="Distance in miles from search location"
     )

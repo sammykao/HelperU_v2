@@ -85,21 +85,23 @@ class AuthService:
 
             user_id = auth_response.user.id
 
-            # Get the session to extract tokens
-            session = self.public_client.auth.get_session()
-            if session is None:
-                # If no session, try to get user data from the auth response
-                access_token = getattr(auth_response, "access_token", None)
-                refresh_token = getattr(auth_response, "refresh_token", None)
+            # Extract tokens directly from auth response
+            # The session approach doesn't work reliably across HTTP requests
+            access_token = getattr(auth_response, "access_token", None)
+            refresh_token = getattr(auth_response, "refresh_token", None)
 
-                if not access_token:
-                    raise HTTPException(
-                        status_code=400,
-                        detail="Failed to establish session after OTP verification",
-                    )
-            else:
-                access_token = getattr(session, "access_token", None)
-                refresh_token = getattr(session, "refresh_token", None)
+            # If tokens are not in auth_response, try to get from session as fallback
+            if not access_token:
+                session = self.public_client.auth.get_session()
+                if session:
+                    access_token = getattr(session, "access_token", None)
+                    refresh_token = getattr(session, "refresh_token", None)
+
+            if not access_token:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Failed to establish session after OTP verification",
+                )
 
             return ClientProfileResponse(
                 success=True,
@@ -114,7 +116,6 @@ class AuthService:
             # Check for specific Supabase errors
             error_msg = str(exc)
             if "expired" in error_msg.lower() or "invalid" in error_msg.lower():
-                print(error_msg)
                 raise HTTPException(
                     status_code=400,
                     detail="OTP token has expired or is invalid. Please request a new OTP.",
@@ -200,6 +201,7 @@ class AuthService:
 
             else:
                 print("No existing account found, creating new user")
+
                 # If no existing account found, create new user
                 user_response = self.admin_client.auth.admin.create_user(
                     {
@@ -333,10 +335,19 @@ class AuthService:
 
             user_id = auth_response.user.id
 
-            # After OTP verification, get the current session to extract tokens
-            session = self.public_client.auth.get_session()
+            # Extract tokens directly from auth response
+            # The session approach doesn't work reliably across HTTP requests
+            access_token = getattr(auth_response, "access_token", None)
+            refresh_token = getattr(auth_response, "refresh_token", None)
 
-            if not session:
+            # If tokens are not in auth_response, try to get from session as fallback
+            if not access_token:
+                session = self.public_client.auth.get_session()
+                if session:
+                    access_token = getattr(session, "access_token", None)
+                    refresh_token = getattr(session, "refresh_token", None)
+
+            if not access_token:
                 raise HTTPException(
                     status_code=400,
                     detail="Failed to establish session after OTP verification",
@@ -346,8 +357,8 @@ class AuthService:
                 success=True,
                 user_id=user_id,
                 message="Helper phone verified successfully",
-                access_token=session.access_token,
-                refresh_token=session.refresh_token,
+                access_token=access_token,
+                refresh_token=refresh_token,
             )
         except HTTPException:
             raise

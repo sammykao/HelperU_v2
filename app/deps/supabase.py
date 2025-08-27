@@ -56,6 +56,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             # phone_confirmed_at=user.user.phone_confirmed_at,
             # created_at=user.user.created_at,
         )
+
     except HTTPException:
         raise
     except Exception:
@@ -114,4 +115,3 @@ def get_chat_service() -> ChatService:
 def get_openphone_service() -> OpenPhoneService:
     """Dependency to get OpenPhone service for SMS notifications"""
     return OpenPhoneService()
-

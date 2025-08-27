@@ -1,5 +1,6 @@
 from typing import List
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class InvitationResponse(BaseModel):
@@ -7,8 +8,8 @@ class InvitationResponse(BaseModel):
     id: str
     task_id: str
     helper_id: str
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
 class InvitationListResponse(BaseModel):
     """Response model for list of invitations"""
