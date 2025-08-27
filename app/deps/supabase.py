@@ -68,8 +68,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 def get_stripe_service() -> StripeService:
     """Dependency to get Stripe service"""
-    # admin_client = get_supabase_admin()
-    return StripeService()
+    admin_client = get_supabase_admin()
+    return StripeService(admin_client)
 
 
 def get_profile_service() -> ProfileService:
