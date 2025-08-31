@@ -29,7 +29,7 @@ class TaskService:
         try:
             # Check if user is a client
             client = (
-                await self.admin_client.table("clients")
+                self.admin_client.table("clients")
                 .select("*")
                 .eq("id", client_id)
                 .execute()
@@ -38,26 +38,25 @@ class TaskService:
                 raise HTTPException(status_code=404, detail="Client not found")
 
             # Check if user has reached post limit
-            post_limit = await self.stripe_service.get_monthly_post_limit(client_id)
-            if post_limit < 1:
-                raise HTTPException(
-                    status_code=400, detail="User has reached post limit."
-                )
+            # post_limit = await self.stripe_service.get_monthly_post_limit(client_id)
+            # if post_limit < 1:
+            #     raise HTTPException(
+            #         status_code=400, detail="User has reached post limit."
+            #     )
+
+            task_payload = request.model_dump()
+            task_payload["client_id"] = client_id
 
             # Create the task
-            result = (
-                await self.admin_client.table("tasks")
-                .insert(request.model_dump())
-                .execute()
-            )
+            result = self.admin_client.table("tasks").insert(task_payload).execute()
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to create task")
 
             # Update client's post count (fire and forget) monthly and total
-            asyncio.create_task(
-                self.stripe_service.update_monthly_post_count(client_id)
-            )
-            asyncio.create_task(self.update_client_post_count(client_id))
+            # asyncio.create_task(
+            #     self.stripe_service.update_monthly_post_count(client_id)
+            # )
+            # asyncio.create_task(self.update_client_post_count(client_id))
             # Return the created task
             created_task = result.data[0]
             return TaskResponse(**created_task)
@@ -172,7 +171,7 @@ class TaskService:
         try:
             # Get total count
             count_result = (
-                await self.admin_client.table("tasks")
+                self.admin_client.table("tasks")
                 .select("id", count="exact")
                 .eq("client_id", user_id)
                 .execute()
@@ -181,13 +180,14 @@ class TaskService:
 
             # Get paginated tasks
             result = (
-                await self.admin_client.table("tasks")
+                self.admin_client.table("tasks")
                 .select("*")
                 .eq("client_id", user_id)
                 .order("created_at", desc=True)
                 .range(offset, offset + limit - 1)
                 .execute()
             )
+
 
             tasks = []
             for task in result.data:
@@ -334,7 +334,11 @@ class TaskService:
             )
 
             if not result or not result.data:
-                return None
+                return PublicTaskResponse(
+                    result=[],
+                    limit=20,
+                    total_count=0,
+                )
 
             tasks = [PublicTask(**task) for task in result.data]
             response = PublicTaskResponse(

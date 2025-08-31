@@ -234,3 +234,9 @@ class HelperVerificationWebhookData(BaseModel):
     def phone_number_final(self) -> Optional[str]:
         """Get the phone number from either phone or phone_number field"""
         return self.phone or self.phone_number
+
+
+class ClientAccountExistanceResponse(BaseModel):
+    """Response for checking if client account exists"""
+
+    does_exist: bool

@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from supabase import Client
 
 from app.schemas.auth import (
+    ClientAccountExistanceResponse,
     ClientProfileUpdateRequest,
     HelperSignupRequest,
     HelperProfileUpdateRequest,
@@ -522,4 +523,30 @@ class AuthService:
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to check email verification: {str(exc)}",
+            )
+
+    async def check_account_existence(
+        self, phone: str
+    ) -> ClientAccountExistanceResponse:
+        try:
+            existing_client = (
+                self.admin_client.table("clients")
+                .select("id")
+                .eq("phone", phone)
+                .limit(1)
+                .execute()
+            )
+
+            print(existing_client)
+
+            if not existing_client.data:
+                return ClientAccountExistanceResponse(does_exist=False)
+
+            return ClientAccountExistanceResponse(does_exist=True)
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to check account existence: {str(exc)}",
             )
