@@ -1,8 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.deps.supabase import get_current_user, get_task_service
 from app.services.task_service import TaskService
-from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate, TaskListResponse, TaskSearchRequest, TaskSearchListResponse, PublicTaskResponse
-from app.schemas.auth import CurrentUser    
+from app.schemas.task import (
+    TaskCreate,
+    TaskResponse,
+    TaskUpdate,
+    TaskListResponse,
+    TaskSearchRequest,
+    TaskSearchListResponse,
+    PublicTaskResponse,
+)
+from app.schemas.auth import CurrentUser
 
 router = APIRouter()
 
@@ -11,7 +19,7 @@ router = APIRouter()
 async def create_task(
     task: TaskCreate,
     current_user: CurrentUser = Depends(get_current_user),
-    task_service: TaskService = Depends(get_task_service)
+    task_service: TaskService = Depends(get_task_service),
 ):
     """Create a new task (post) with subscription limit checking"""
     try:
@@ -21,14 +29,14 @@ async def create_task(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create task: {str(e)}"
+            detail=f"Failed to create task: {str(e)}",
         )
 
 
 @router.get("/", response_model=TaskSearchListResponse)
 async def get_tasks(
     search_request: TaskSearchRequest,
-    task_service: TaskService = Depends(get_task_service)
+    task_service: TaskService = Depends(get_task_service),
 ):
     """Get tasks with pagination, filtering, and distance-based sorting"""
     try:
@@ -38,7 +46,7 @@ async def get_tasks(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch tasks: {str(e)}"
+            detail=f"Failed to fetch tasks: {str(e)}",
         )
 
 
@@ -61,36 +69,30 @@ async def get_my_tasks(
     current_user: CurrentUser = Depends(get_current_user),
     task_service: TaskService = Depends(get_task_service),
     limit: int = 20,
-    offset: int = 0
+    offset: int = 0,
 ):
     """Get current user's own tasks with pagination"""
     try:
         return await task_service.get_user_tasks(
-            user_id=current_user.id,
-            limit=limit,
-            offset=offset
+            user_id=current_user.id, limit=limit, offset=offset
         )
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch tasks: {str(e)}"
+            detail=f"Failed to fetch tasks: {str(e)}",
         )
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
-async def get_task(
-    task_id: str,
-    task_service: TaskService = Depends(get_task_service)
-):
+async def get_task(task_id: str, task_service: TaskService = Depends(get_task_service)):
     """Get a specific task by ID"""
     try:
         task = await task_service.get_task(task_id)
         if not task:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
             )
         return task
     except HTTPException:
@@ -98,7 +100,7 @@ async def get_task(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch task: {str(e)}"
+            detail=f"Failed to fetch task: {str(e)}",
         )
 
 
@@ -106,7 +108,7 @@ async def get_task(
 async def delete_task(
     task_id: str,
     current_user: CurrentUser = Depends(get_current_user),
-    task_service: TaskService = Depends(get_task_service)
+    task_service: TaskService = Depends(get_task_service),
 ):
     """Delete a task (only by the creator)"""
     try:
@@ -116,14 +118,14 @@ async def delete_task(
         else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to delete task"
+                detail="Failed to delete task",
             )
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete task: {str(e)}"
+            detail=f"Failed to delete task: {str(e)}",
         )
 
 
@@ -132,7 +134,7 @@ async def update_task(
     task_id: str,
     task_update: TaskUpdate,
     current_user: CurrentUser = Depends(get_current_user),
-    task_service: TaskService = Depends(get_task_service)
+    task_service: TaskService = Depends(get_task_service),
 ):
     """Update a task (only by the creator)"""
     try:
@@ -142,17 +144,15 @@ async def update_task(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update task: {str(e)}"
+            detail=f"Failed to update task: {str(e)}",
         )
-
-
 
 
 @router.post("/{task_id}/complete", response_model=TaskResponse)
 async def complete_task(
     task_id: str,
     current_user: CurrentUser = Depends(get_current_user),
-    task_service: TaskService = Depends(get_task_service)
+    task_service: TaskService = Depends(get_task_service),
 ):
     """Mark a task as completed"""
     try:
@@ -162,6 +162,5 @@ async def complete_task(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to complete task: {str(e)}"
+            detail=f"Failed to complete task: {str(e)}",
         )
-

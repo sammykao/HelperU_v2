@@ -12,7 +12,7 @@ from app.schemas.task import (
     TaskListResponse,
     TaskSearchListResponse,
     PublicTask,
-    PublicTaskResponse
+    PublicTaskResponse,
 )
 from app.services.stripe_service import StripeService
 
@@ -31,31 +31,34 @@ class TaskService:
             client = self.admin_client.table("clients").select("*").eq("id", client_id).execute()
             if not client.data:
                 raise HTTPException(status_code=404, detail="Client not found")
-            
+
             # Check if user has reached post limit
             post_limit = await self.stripe_service.get_monthly_post_limit(client_id)
             if post_limit < 1:
                 raise HTTPException(
-                    status_code=400, 
-                    detail="User has reached post limit."
+                    status_code=400, detail="User has reached post limit."
                 )
-            
+
             # Create the task
             result = self.admin_client.table("tasks").insert(request.model_dump()).execute()
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to create task")
-            
+
             # Update client's post count (fire and forget) monthly and total
-            asyncio.create_task(self.stripe_service.update_monthly_post_count(client_id))
+            asyncio.create_task(
+                self.stripe_service.update_monthly_post_count(client_id)
+            )
             asyncio.create_task(self.update_client_post_count(client_id))
             # Return the created task
             created_task = result.data[0]
             return TaskResponse(**created_task)
-            
+
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to create task: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to create task: {str(e)}"
+            )
 
     async def get_task(self, task_id: str) -> Optional[TaskResponse]:
         """Get a single task by ID"""
@@ -63,39 +66,47 @@ class TaskService:
             result = self.admin_client.table("tasks").select("*").eq("id", task_id).execute()
             if not result.data:
                 return None
-            
+
             return TaskResponse(**result.data[0])
-            
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to get task: {str(e)}")
 
-    async def update_task(self, task_id: str, user_id: str, request: TaskUpdate) -> TaskResponse:
+    async def update_task(
+        self, task_id: str, user_id: str, request: TaskUpdate
+    ) -> TaskResponse:
         """Update task (only client who created it can update)"""
         try:
             # Verify task exists and user owns it
             task = await self.get_task(task_id)
             if not task:
                 raise HTTPException(status_code=404, detail="Task not found")
-            
+
             if task.client_id != user_id:
-                raise HTTPException(status_code=403, detail="Only task owner can update task")
-            
+                raise HTTPException(
+                    status_code=403, detail="Only task owner can update task"
+                )
+
             if task.completed_at is not None:
-                raise HTTPException(status_code=400, detail="Cannot update completed task")
-            
+                raise HTTPException(
+                    status_code=400, detail="Cannot update completed task"
+                )
+
             # Update the task
             result = self.admin_client.table("tasks").update(request.model_dump()).eq("id", task_id).execute()
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to update task")
-            
+
             # Return updated task
             updated_task = result.data[0]
             return TaskResponse(**updated_task)
-            
+
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to update task: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to update task: {str(e)}"
+            )
 
     async def delete_task(self, task_id: str, user_id: str) -> bool:
         """Delete task (only client who created it can delete)"""
@@ -104,27 +115,35 @@ class TaskService:
             task = await self.get_task(task_id)
             if not task:
                 raise HTTPException(status_code=404, detail="Task not found")
-            
+
             if task.client_id != user_id:
-                raise HTTPException(status_code=403, detail="Only task owner can delete task")
-            
+                raise HTTPException(
+                    status_code=403, detail="Only task owner can delete task"
+                )
+
             # Check if task can be deleted (not assigned/completed)
             if task.completed_at is not None:
-                raise HTTPException(status_code=400, detail="Cannot delete task in current status")
-            
+                raise HTTPException(
+                    status_code=400, detail="Cannot delete task in current status"
+                )
+
             # Delete the task
             result = self.admin_client.table("tasks").delete().eq("id", task_id).execute()
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to delete task")
-            
+
             return True
-            
+
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to delete task: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to delete task: {str(e)}"
+            )
 
-    async def get_user_tasks(self, user_id: str, limit: int = 20, offset: int = 0) -> TaskListResponse:
+    async def get_user_tasks(
+        self, user_id: str, limit: int = 20, offset: int = 0
+    ) -> TaskListResponse:
         """Get tasks for a specific user (client)"""
         try:
             # Get total count
@@ -138,18 +157,19 @@ class TaskService:
             tasks = []
             for task in result.data:
                 tasks.append(TaskResponse(**task))
-            
-            return TaskListResponse(
-                tasks=tasks,
-                total_count=total_count,
-                limit=limit,
-                offset=offset
-            )
-            
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to get user tasks: {str(e)}")
 
-    async def search_tasks(self, search_request: TaskSearchRequest) -> TaskSearchListResponse:
+            return TaskListResponse(
+                tasks=tasks, total_count=total_count, limit=limit, offset=offset
+            )
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get user tasks: {str(e)}"
+            )
+
+    async def search_tasks(
+        self, search_request: TaskSearchRequest
+    ) -> TaskSearchListResponse:
         """Search tasks with filters using efficient count and data queries"""
         try:
             # First, get the total count efficiently without pulling all data
@@ -168,7 +188,7 @@ class TaskService:
                     tasks=[],
                     total_count=0,
                     limit=search_request.limit,
-                    offset=search_request.offset
+                    offset=search_request.offset,
                 )
             
             result = self.admin_client.rpc(
@@ -181,22 +201,23 @@ class TaskService:
                     tasks=[],
                     total_count=0,
                     limit=search_request.limit,
-                    offset=search_request.offset
+                    offset=search_request.offset,
                 )
-            
+
             # Convert to TaskSearchResponse objects
             tasks = [TaskSearchResponse(**task_data) for task_data in result.data]
-            
+
             return TaskSearchListResponse(
                 tasks=tasks,
                 total_count=total_count,
                 limit=search_request.limit,
-                offset=search_request.offset
+                offset=search_request.offset,
             )
-            
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to search tasks: {str(e)}")
 
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to search tasks: {str(e)}"
+            )
 
     async def complete_task(self, task_id: str, user_id: str) -> TaskResponse:
         """Mark task as completed (only client can do this)"""
@@ -205,13 +226,15 @@ class TaskService:
             task = await self.get_task(task_id)
             if not task:
                 raise HTTPException(status_code=404, detail="Task not found")
-            
+
             if task.client_id != user_id:
-                raise HTTPException(status_code=403, detail="Only task owner can complete task")
-            
+                raise HTTPException(
+                    status_code=403, detail="Only task owner can complete task"
+                )
+
             if task.completed_at is not None:
                 raise HTTPException(status_code=400, detail="Task already completed")
-            
+
             # Update task status
             result = self.admin_client.table("tasks").update({
                 "completed_at": "now()",
@@ -219,15 +242,17 @@ class TaskService:
             
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to complete task")
-            
+
             # Return updated task
             updated_task = result.data[0]
             return TaskResponse(**updated_task)
-            
+
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to complete task: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to complete task: {str(e)}"
+            )
 
     async def update_client_post_count(self, client_id: str) -> None:
         """Update client's post count"""
@@ -238,14 +263,18 @@ class TaskService:
             }).eq("id", client_id).execute()
             
             if not result.data:
-                raise HTTPException(status_code=500, detail="Failed to update client post count")
-            
+                raise HTTPException(
+                    status_code=500, detail="Failed to update client post count"
+                )
+
             return True
-            
+
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to update client post count: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to update client post count: {str(e)}"
+            )
 
     async def get_available_tasks(self) -> Optional[PublicTaskResponse]:
         try:

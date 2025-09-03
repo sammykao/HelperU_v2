@@ -21,9 +21,13 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(profile_router, prefix="/api/v1/profile", tags=["users"])
-app.include_router(subscriptions_router, prefix="/api/v1/subscriptions", tags=["subscriptions"])
+app.include_router(
+    subscriptions_router, prefix="/api/v1/subscriptions", tags=["subscriptions"]
+)
 app.include_router(tasks_router, prefix="/api/v1/tasks", tags=["tasks"])
-app.include_router(applications_router, prefix="/api/v1/applications", tags=["applications"])
+app.include_router(
+    applications_router, prefix="/api/v1/applications", tags=["applications"]
+)
 app.include_router(helper_router, prefix="/api/v1/helpers", tags=["helpers"])
 app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])
 app.include_router(ai_agent_router, prefix="/api/v1/ai", tags=["ai-agent"])
@@ -40,10 +44,11 @@ def root() -> dict:
         "message": "HelperU Backend API",
         "version": "0.1.0",
         "docs": "/docs",
-        "redoc": "/redoc"
+        "redoc": "/redoc",
     }
+
 
 @app.get("/test-public")
 def test_public() -> dict:
     print("DEBUG: test-public endpoint called - no auth required")
-    return {"message": "This is a public test endpoint"} 
+    return {"message": "This is a public test endpoint"}
