@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     OPENPHONE_API_KEY: str
     OPENPHONE_FROM_NUMBER: str
 
+    OPENAI_API_KEY: str
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
 

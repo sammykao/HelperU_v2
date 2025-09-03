@@ -8,7 +8,7 @@ import sys
 import logging
 import click
 import psycopg2
-from typing import Dict, List, Any
+from typing import Dict
 import os
 from dotenv import load_dotenv
 

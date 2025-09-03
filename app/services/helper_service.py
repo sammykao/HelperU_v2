@@ -12,7 +12,7 @@ class HelperService:
     async def get_helper(self, helper_id: str) -> HelperResponse:
         """Get a helper by id"""
         try:
-            helper_result = await self.admin_client.table("helpers").select("*").eq("id", helper_id).execute()
+            helper_result = self.admin_client.table("helpers").select("*").eq("id", helper_id).execute()
             if not helper_result.data:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Helper not found")
             
@@ -24,7 +24,7 @@ class HelperService:
 
     async def get_helpers(self, limit: int = 20, offset: int = 0) -> HelperListResponse:
         try:
-            helpers_result = await self.admin_client.table("helpers").select("*").limit(limit).offset(offset).execute()
+            helpers_result = self.admin_client.table("helpers").select("*").limit(limit).offset(offset).execute()
             if not helpers_result.data:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No helpers found")
             
@@ -37,7 +37,7 @@ class HelperService:
         try:
             count_params = search_request.model_dump(exclude={"limit", "offset"})
 
-            count_result = await self.admin_client.rpc(
+            count_result = self.admin_client.rpc(
                 "count_helpers_matching_criteria",
                 count_params
             ).execute()
@@ -46,7 +46,7 @@ class HelperService:
             if total_count == 0:
                 return HelperListResponse(helpers=[], total_count=0, limit=search_request.limit, offset=search_request.offset)
             
-            result = await self.admin_client.rpc(
+            result = self.admin_client.rpc(
                 "get_helpers_matching_criteria",
                 search_request.model_dump()
             ).execute()

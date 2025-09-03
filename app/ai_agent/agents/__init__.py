@@ -1,25 +1,19 @@
-"""AI Agent Package"""
+"""AI Agent package for HelperU system
 
-from .base import BaseAgent, AgentState, AgentMemory, AgentRegistry
-from .router_agent import RouterAgent
-from .user_assistant import UserAssistant
-from .task_manager import TaskManager
-from .chat_moderator import ChatModerator
-from .payment_processor import PaymentProcessor
-from .notification_coordinator import NotificationCoordinator
-from .application_processor import ApplicationProcessor
+This package contains all the AI agents that provide intelligent assistance
+for different aspects of the HelperU platform.
+"""
+
+from .task_agent import TaskAgent
+from .helper_agent import HelperAgent
+from .chat_agent import ChatAgent
+from .profile_agent import ProfileAgent
+from .application_agent import ApplicationAgent
 
 __all__ = [
-    "BaseAgent",
-    "AgentState", 
-    "AgentMemory",
-    "AgentRegistry",
-    "RouterAgent",
-    "UserAssistant",
-    "TaskManager",
-    "ChatModerator",
-    "PaymentProcessor",
-    "NotificationCoordinator",
-    "ApplicationProcessor"
+    "TaskAgent",
+    "HelperAgent", 
+    "ChatAgent",
+    "ProfileAgent",
+    "ApplicationAgent"
 ]
-

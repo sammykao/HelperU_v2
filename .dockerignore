@@ -1,16 +1,64 @@
-__pycache__/
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
 *.pyc
 *.pyo
 *.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# Virtual environments
 .env
-.venv/
+.venv
+env/
 venv/
-.git/
-.gitignore
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
 .vscode/
 .idea/
-node_modules/
-.dist/
-dist/
-build/
-__tests__/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+tests/
+data_migration/
+*.md
+README.md
+uv.lock
+.dockerignore
+docker-compose.yml
+
+# Data directories
+data/
+*.db
+*.sqlite

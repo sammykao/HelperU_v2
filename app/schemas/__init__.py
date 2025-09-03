@@ -105,6 +105,11 @@ from .openphone import (
     BulkNotificationResponse
 )
 
+from .ai import (
+    AIRequest,
+    AIResponse,
+)
+
 __all__ = [
     # Auth schemas
     "PhoneOTPRequest",
@@ -201,4 +206,8 @@ __all__ = [
     "WelcomeMessageNotification",
     "BulkNotificationRequest",
     "BulkNotificationResponse",
+    
+    # AI schemas
+    "AIRequest",
+    "AIResponse",
 ]

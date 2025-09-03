@@ -9,6 +9,7 @@ from app.api.v1.endpoints.tasks import router as tasks_router
 from app.api.v1.endpoints.applications import router as applications_router
 from app.api.v1.endpoints.helper import router as helper_router
 from app.api.v1.endpoints.chat import router as chat_router
+from app.api.v1.endpoints.ai_agent import router as ai_agent_router
 
 app = FastAPI(title="HelperU Backend Server", version="0.1.0")
 
@@ -25,6 +26,7 @@ app.include_router(tasks_router, prefix="/api/v1/tasks", tags=["tasks"])
 app.include_router(applications_router, prefix="/api/v1/applications", tags=["applications"])
 app.include_router(helper_router, prefix="/api/v1/helpers", tags=["helpers"])
 app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])
+app.include_router(ai_agent_router, prefix="/api/v1/ai", tags=["ai-agent"])
 
 
 @app.get("/healthz")
