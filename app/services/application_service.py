@@ -32,7 +32,7 @@ class ApplicationService:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the owner of this task")
             
             # Get the applications for the task
-            applications_result = await self.admin_client.table("applications")\
+            applications_result = self.admin_client.table("applications")\
                 .join("helpers", "helpers.id = applications.helper_id")\
                 .select("applications.*, helpers.*")\
                 .eq("task_id", task_id).execute()
@@ -70,7 +70,7 @@ class ApplicationService:
     async def get_applications_by_helper(self, helper_id: str) -> List[ApplicationResponse]:
         """Get all applications for the tasks of the current helper user"""
         try:
-            applications_result = await self.admin_client.table("applications").select("*").eq("helper_id", helper_id).execute()
+            applications_result = self.admin_client.table("applications").select("*").eq("helper_id", helper_id).execute()
             if not applications_result.data:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No applications found")
             
@@ -94,17 +94,17 @@ class ApplicationService:
             if not task:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
             
-            helper = await self.admin_client.table("helpers").select("*").eq("id", helper_id).execute()
+            helper = self.admin_client.table("helpers").select("*").eq("id", helper_id).execute()
             if not helper.data:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Helper not found")
             
             # Check if the helper has already applied to the task
-            applications_result = await self.admin_client.table("applications").select("*").eq("helper_id", helper_id).eq("task_id", task_id).execute()
+            applications_result = self.admin_client.table("applications").select("*").eq("helper_id", helper_id).eq("task_id", task_id).execute()
             if applications_result.data:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You have already applied to this task")
             
             # Create the application
-            application = await self.admin_client.table("applications").insert(application_create_request.model_dump()).execute()
+            application = self.admin_client.table("applications").insert(application_create_request.model_dump()).execute()
             if not application.data:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create application")
             
@@ -120,7 +120,7 @@ class ApplicationService:
     async def update_helper_application_count(self, helper_id: str) -> bool:
         """Update helper's total application count (fire and forget)"""
         try:
-            result = await self.admin_client.rpc("increment_helper_application_count", {"helper_uuid": helper_id}).execute()
+            result = self.admin_client.rpc("increment_helper_application_count", {"helper_uuid": helper_id}).execute()
             if not result.data:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update helper application count")
             return True
@@ -130,7 +130,7 @@ class ApplicationService:
     async def get_application(self, application_id: str) -> ApplicationResponse:
         """Get an application by id"""
         try:
-            application_result = await self.admin_client\
+            application_result = self.admin_client\
                 .table("applications")\
                 .join("helpers", "helpers.id = applications.helper_id")\
                 .select("applications.*, helpers.*")\
@@ -158,7 +158,7 @@ class ApplicationService:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the owner of this task")
             
             # Get all invitations for the task
-            invitations_result = await self.admin_client.table("invitations").select("*").eq("task_id", task_id).execute()
+            invitations_result = self.admin_client.table("invitations").select("*").eq("task_id", task_id).execute()
             if not invitations_result.data:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No invitations found")
             
@@ -176,7 +176,7 @@ class ApplicationService:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Helper not found")
             
             # Get all invitations for the helper
-            invitations_result = await self.admin_client.table("invitations").select("*").eq("helper_id", helper_id).execute()
+            invitations_result = self.admin_client.table("invitations").select("*").eq("helper_id", helper_id).execute()
             if not invitations_result.data:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No invitations found")
             
@@ -196,12 +196,12 @@ class ApplicationService:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the owner of this task")
             
             # Check if the helper has already been invited to the task
-            invitations_result = await self.admin_client.table("invitations").select("*").eq("task_id", task_id).eq("helper_id", helper_id).execute()
+            invitations_result = self.admin_client.table("invitations").select("*").eq("task_id", task_id).eq("helper_id", helper_id).execute()
             if invitations_result.data:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Helper has already been invited to this task")
             
             # Create the invitation
-            invitation = await self.admin_client.table("invitations").insert({
+            invitation = self.admin_client.table("invitations").insert({
                 "task_id": task_id,
                 "helper_id": helper_id
             }).execute()

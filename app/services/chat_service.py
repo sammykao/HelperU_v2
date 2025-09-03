@@ -5,7 +5,6 @@ from fastapi import HTTPException, status
 from supabase import Client
 
 from app.schemas.chat import (
-    ChatCreateRequest,
     ChatResponse,
     ChatListResponse,
     MessageCreateRequest,
@@ -78,8 +77,13 @@ class ChatService:
 
             chats = []
             for row in result.data:
-                chat['users'] = [UUID(p["user_id"]) for p in row.get("participants") or []]
-                chats.append(ChatResponse(**chat))
+                chat_data = {
+                    'id': row['id'],
+                    'users': [UUID(p["user_id"]) for p in row.get("participants") or []],
+                    'created_at': row['created_at'],
+                    'updated_at': row['updated_at']
+                }
+                chats.append(ChatResponse(**chat_data))
 
             return ChatListResponse(chats=chats, total=len(chats))
 

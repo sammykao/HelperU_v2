@@ -1,11 +1,10 @@
 import requests
 import logging
-from typing import List, Optional, Union
+from typing import List, Optional
 from fastapi import HTTPException, status
 from app.core.config import settings
 from app.schemas.openphone import (
     OpenPhoneMessageResponse,
-    OpenPhoneErrorResponse,
     OpenPhoneMessageStatus,
     OpenPhoneServiceHealth,
     TaskCreationNotification,

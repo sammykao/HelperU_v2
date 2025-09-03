@@ -8,16 +8,12 @@ class TaskCreate(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=200)
     dates: List[str] = Field(..., description="List of dates in YYYY-MM-DD format")
-    location_type: str = Field(
-        ..., description="Type of location (remote, in-person, etc.)"
-    )
-    zip_code: str = Field(..., description="ZIP code for the task")
-    hourly_rate: float = Field(..., description="Hourly rate for the task")
+    location_type: str = Field(..., description="Type of location (remote, in-person, etc.)")
+    zip_code: Optional[str] = Field(None, description="ZIP code for the task")
+    hourly_rate: float = Field(None, description="Hourly rate for the task")
     description: str = Field(..., min_length=10, max_length=2000)
-    tools_info: str = Field("", description="Information about required tools")
-    public_transport_info: str = Field(
-        "", description="Public transportation information"
-    )
+    tools_info: Optional[str] = Field(None, description="Information about required tools")
+    public_transport_info: Optional[str] = Field(None, description="Public transportation information")
 
 
 class TaskResponse(BaseModel):
@@ -29,10 +25,10 @@ class TaskResponse(BaseModel):
     hourly_rate: float
     dates: List[str]
     location_type: str
-    zip_code: str
+    zip_code: Optional[str] = None
     description: str
-    tools_info: str
-    public_transport_info: str
+    tools_info: Optional[str] = None
+    public_transport_info: Optional[str] = None
     completed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
@@ -40,23 +36,11 @@ class TaskResponse(BaseModel):
 
 class TaskSearchRequest(BaseModel):
     """Request model for task search filtering"""
-
-    search_zip_code: str = Field(
-        ..., description="Base location for distance calculations"
-    )
-    query: Optional[str] = Field(
-        None, description="Text search in title and description"
-    )
-    location_type: Optional[str] = Field(
-        None, description="Filter by location type (remote, in-person, etc.)"
-    )
-    min_hourly_rate: Optional[float] = Field(
-        None, ge=0, description="Minimum hourly rate filter"
-    )
-    max_hourly_rate: Optional[float] = Field(
-        None, ge=0, description="Maximum hourly rate filter"
-    )
-    status: str = Field("open", description="Filter by task status (open, completed)")
+    search_zip_code: Optional[str] = Field(..., description="Base location for distance calculations")
+    query: Optional[str] = Field(None, description="Text search in title and description")
+    location_type: Optional[str] = Field(None, description="Filter by location type (remote, in-person, etc.)")
+    min_hourly_rate: Optional[float] = Field(None, ge=0, description="Minimum hourly rate filter")
+    max_hourly_rate: Optional[float] = Field(None, ge=0, description="Maximum hourly rate filter")
     limit: int = Field(20, ge=1, le=100, description="Number of tasks to return")
     offset: int = Field(0, ge=0, description="Number of tasks to skip")
 
@@ -70,14 +54,6 @@ class TaskSearchRequest(BaseModel):
         ):
             if v <= values["min_hourly_rate"]:
                 raise ValueError("max_hourly_rate must be greater than min_hourly_rate")
-        return v
-
-    @validator("status")
-    def validate_status(cls, v):
-        """Ensure status is a valid value"""
-        valid_statuses = ["open", "completed"]
-        if v not in valid_statuses:
-            raise ValueError(f"status must be one of: {valid_statuses}")
         return v
 
 

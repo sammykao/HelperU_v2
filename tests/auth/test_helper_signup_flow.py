@@ -9,7 +9,7 @@ import sys
 import argparse
 import requests
 import json
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 # Configure API base URL (override with API_BASE_URL env var)
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
@@ -37,7 +37,7 @@ class HelperSignupTester:
             "phone": phone
         }
         
-        print(f"📧 Testing Helper Signup")
+        print("📧 Testing Helper Signup")
         print(f"   URL: {url}")
         print(f"   Payload: {json.dumps(payload, indent=2)}")
         
@@ -61,7 +61,7 @@ class HelperSignupTester:
                 try:
                     error_data = response.json()
                     print(f"   Error: {json.dumps(error_data, indent=2)}")
-                except:
+                except Exception:
                     print(f"   Error: {response.text}")
                 return {"success": False, "error": f"HTTP {response.status_code}"}
                 
@@ -77,7 +77,7 @@ class HelperSignupTester:
             "phone": phone
         }
         
-        print(f"📱 Testing Helper OTP Send")
+        print("📱 Testing Helper OTP Send")
         print(f"   URL: {url}")
         print(f"   Payload: {json.dumps(payload, indent=2)}")
         
@@ -100,7 +100,7 @@ class HelperSignupTester:
                 try:
                     error_data = response.json()
                     print(f"   Error: {json.dumps(error_data, indent=2)}")
-                except:
+                except Exception:
                     print(f"   Error: {response.text}")
                 return {"success": False, "error": f"HTTP {response.status_code}"}
                 
@@ -117,7 +117,7 @@ class HelperSignupTester:
             "token": token
         }
         
-        print(f"🔐 Testing Helper OTP Verification")
+        print("🔐 Testing Helper OTP Verification")
         print(f"   URL: {url}")
         print(f"   Payload: {json.dumps(payload, indent=2)}")
         
@@ -144,7 +144,7 @@ class HelperSignupTester:
                 try:
                     error_data = response.json()
                     print(f"   Error: {json.dumps(error_data, indent=2)}")
-                except:
+                except Exception:
                     print(f"   Error: {response.text}")
                 return {"success": False, "error": f"HTTP {response.status_code}"}
                 
@@ -165,7 +165,7 @@ class HelperSignupTester:
             "Content-Type": "application/json"
         }
         
-        print(f"👤 Testing Helper Profile Completion")
+        print("👤 Testing Helper Profile Completion")
         print(f"   URL: {url}")
         print(f"   Headers: {json.dumps(headers, indent=2)}")
         print(f"   Payload: {json.dumps(profile_data, indent=2)}")
@@ -179,7 +179,7 @@ class HelperSignupTester:
                 print(f"   Data: {json.dumps(data, indent=2)}")
                 
                 if data.get("success"):
-                    print(f"   ✅ Profile completion successful!")
+                    print("   ✅ Profile completion successful!")
                     return data
                 else:
                     print(f"   ❌ Profile completion failed: {data.get('message')}")
@@ -189,7 +189,7 @@ class HelperSignupTester:
                 try:
                     error_data = response.json()
                     print(f"   Error: {json.dumps(error_data, indent=2)}")
-                except:
+                except Exception:
                     print(f"   Error: {response.text}")
                 return {"success": False, "error": f"HTTP {response.status_code}"}
                 
@@ -206,7 +206,7 @@ class HelperSignupTester:
             "otp_code": otp_code
         }
         
-        print(f"📧 Testing Email OTP Verification")
+        print("📧 Testing Email OTP Verification")
         print(f"   URL: {url}")
         print(f"   Payload: {json.dumps(payload, indent=2)}")
         
@@ -219,7 +219,7 @@ class HelperSignupTester:
                 print(f"   Data: {json.dumps(data, indent=2)}")
                 
                 if data.get("success"):
-                    print(f"   ✅ Email OTP verification successful!")
+                    print("   ✅ Email OTP verification successful!")
                     return data
                 else:
                     print(f"   ❌ Email OTP verification failed: {data.get('message')}")
@@ -229,7 +229,7 @@ class HelperSignupTester:
                 try:
                     error_data = response.json()
                     print(f"   Error: {json.dumps(error_data, indent=2)}")
-                except:
+                except Exception:
                     print(f"   Error: {response.text}")
                 return {"success": False, "error": f"HTTP {response.status_code}"}
                 
@@ -249,7 +249,7 @@ class HelperSignupTester:
             "Authorization": f"Bearer {self.access_token}"
         }
         
-        print(f"📊 Testing Profile Status")
+        print("📊 Testing Profile Status")
         print(f"   URL: {url}")
         print(f"   Headers: {json.dumps(headers, indent=2)}")
         
@@ -262,7 +262,7 @@ class HelperSignupTester:
                 print(f"   Data: {json.dumps(data, indent=2)}")
                 
                 if data.get("profile_completed") is not None:
-                    print(f"   ✅ Profile status retrieved successfully!")
+                    print("   ✅ Profile status retrieved successfully!")
                     print(f"   📋 Status: {data.get('user_type')} - Email: {data.get('email_verified')}, Phone: {data.get('phone_verified')}, Profile: {data.get('profile_completed')}")
                     return data
                 else:
@@ -273,7 +273,7 @@ class HelperSignupTester:
                 try:
                     error_data = response.json()
                     print(f"   Error: {json.dumps(error_data, indent=2)}")
-                except:
+                except Exception:
                     print(f"   Error: {response.text}")
                 return {"success": False, "error": f"HTTP {response.status_code}"}
                 
@@ -295,7 +295,7 @@ class HelperSignupTester:
                     "type": "helper",
                     "data": data
                 }
-        except:
+        except Exception:
             pass
         
         # Try to get client profile
@@ -309,7 +309,7 @@ class HelperSignupTester:
                     "type": "client", 
                     "data": data
                 }
-        except:
+        except Exception:
             pass
         
         print(f"   📋 No existing profile found for user {user_id}")
@@ -322,7 +322,7 @@ class HelperSignupTester:
             "email": email
         }
         
-        print(f"📧 Testing Email Resend")
+        print("📧 Testing Email Resend")
         print(f"   URL: {url}")
         print(f"   Payload: {json.dumps(payload, indent=2)}")
         
@@ -345,7 +345,7 @@ class HelperSignupTester:
                 try:
                     error_data = response.json()
                     print(f"   Error: {json.dumps(error_data, indent=2)}")
-                except:
+                except Exception:
                     print(f"   Error: {response.text}")
                 return {"success": False, "error": f"HTTP {response.status_code}"}
                 
@@ -369,7 +369,7 @@ class HelperSignupTester:
         # Step 2: Get OTP from user (Supabase automatically sent it during signup)
         print("\n📋 Step 2: Enter Phone OTP Code")
         print(f"   Supabase automatically sent OTP to {phone} during signup")
-        print(f"   Check your phone for the OTP code")
+        print("   Check your phone for the OTP code")
         phone_token = input("   Enter phone OTP code: ").strip()
         
         if not phone_token:
@@ -394,7 +394,7 @@ class HelperSignupTester:
         # Step 5: Get Email OTP Code
         print("\n📋 Step 5: Enter Email OTP Code")
         print(f"   Email verification resent! Check your email {email} for the verification code")
-        print(f"   Look for a 6-digit code (not a clickable link)")
+        print("   Look for a 6-digit code (not a clickable link)")
         email_otp = input("   Enter email OTP code: ").strip()
         
         if not email_otp:
@@ -420,7 +420,7 @@ class HelperSignupTester:
             print("\n📋 Step 8: Complete Helper Profile")
             
             # Get existing profile info to use in payload
-            print(f"   🔍 Querying existing profile information...")
+            print("   🔍 Querying existing profile information...")
             profile_info = self.get_profile_info(self.user_id)
             
             # Use existing profile data if available, otherwise use defaults
@@ -447,7 +447,7 @@ class HelperSignupTester:
                     "zip_code": "02155",
                     "pfp_url": None
                 }
-                print(f"   📋 Using default profile data")
+                print("   📋 Using default profile data")
             
             profile_completion_result = self.test_helper_profile_completion(self.user_id, profile_data)
             if not profile_completion_result.get("success"):
@@ -475,7 +475,7 @@ class HelperSignupTester:
         # Test Phone OTP verification (OTP was automatically sent during signup)
         print("\n🔐 Testing Helper Phone OTP Verification Endpoint")
         print(f"   Supabase automatically sent OTP to {phone} during signup")
-        print(f"   Check your phone for the OTP code")
+        print("   Check your phone for the OTP code")
         phone_token = input("   Enter phone OTP code (or press Enter to skip): ").strip()
         
         if phone_token:
@@ -489,7 +489,7 @@ class HelperSignupTester:
                     # Test email OTP verification
                     print("\n📧 Testing Email OTP Verification Endpoint")
                     print(f"   Email verification resent! Check your email {email} for the verification code")
-                    print(f"   Look for a 6-digit code (not a clickable link)")
+                    print("   Look for a 6-digit code (not a clickable link)")
                     email_otp = input("   Enter email OTP code (or press Enter to skip): ").strip()
                     
                     if email_otp:
@@ -503,7 +503,7 @@ class HelperSignupTester:
                             print("\n👤 Testing Helper Profile Completion Endpoint")
                 
                 # Get existing profile info to use in payload
-                print(f"   🔍 Querying existing profile information...")
+                print("   🔍 Querying existing profile information...")
                 profile_info = self.get_profile_info(self.user_id)
                 
                 # Use existing profile data if available, otherwise use defaults
@@ -530,7 +530,7 @@ class HelperSignupTester:
                         "zip_code": "02155",
                         "pfp_url": None
                     }
-                    print(f"   📋 Using default profile data")
+                    print("   📋 Using default profile data")
                 
                 self.test_helper_profile_completion(self.user_id, profile_data)
         else:

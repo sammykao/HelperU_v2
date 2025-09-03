@@ -9,7 +9,7 @@ import sys
 import argparse
 import requests
 import json
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 # Configure API base URL (override with API_BASE_URL env var)
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
@@ -152,7 +152,7 @@ class MigratedAccountTester:
             return False
         
         # Step 2: Get OTP from user input
-        print(f"\n📋 Step 2: Enter OTP Code")
+        print("\n📋 Step 2: Enter OTP Code")
         print(f"   Check your phone {TEST_PHONE} for the OTP code")
         otp_token = input("   Enter OTP code: ").strip()
         
@@ -161,20 +161,20 @@ class MigratedAccountTester:
             return False
         
         # Step 3: Verify OTP
-        print(f"\n📋 Step 3: Verify OTP")
+        print("\n📋 Step 3: Verify OTP")
         verify_result = self.verify_otp(TEST_PHONE, otp_token)
         if verify_result["status"] != 200:
             print(f"❌ Failed to verify OTP: {verify_result['status']}")
             return False
         
         # Step 4: Get profile
-        print(f"\n📋 Step 4: Get User Profile")
+        print("\n📋 Step 4: Get User Profile")
         profile_result = self.get_profile()
         if profile_result["status"] != 200:
             print(f"❌ Failed to get profile: {profile_result['status']}")
             return False
         
-        print(f"\n🎉 Complete flow test successful!")
+        print("\n🎉 Complete flow test successful!")
         print(f"   User ID: {self.user_id}")
         print(f"   Access Token: {'✅' if self.access_token else '❌'}")
         print(f"   Refresh Token: {'✅' if self.refresh_token else '❌'}")
@@ -187,12 +187,12 @@ class MigratedAccountTester:
         print("=" * 30)
         
         # Test signin endpoint
-        print(f"\n📱 Testing Signin Endpoint")
+        print("\n📱 Testing Signin Endpoint")
         signin_result = self.send_signin_otp(TEST_PHONE)
         print(f"   Signin Status: {signin_result['status']}")
         
         # Test profile endpoint (should fail without auth)
-        print(f"\n👤 Testing Profile Endpoint (Unauthenticated)")
+        print("\n👤 Testing Profile Endpoint (Unauthenticated)")
         profile_result = self.get_profile()
         print(f"   Profile Status: {profile_result['status']}")
         if profile_result["status"] == 401:
@@ -208,18 +208,18 @@ def main(argv: list[str]) -> int:
     
     sub = parser.add_subparsers(dest="command", required=True)
     
-    # Complete flow test
-    flow_parser = sub.add_parser("test-flow", help="Test complete authentication and profile flow")
-    
+        # Complete flow test
+    _ = sub.add_parser("test-flow", help="Test complete authentication and profile flow")
+
     # Individual endpoint tests
-    endpoints_parser = sub.add_parser("test-endpoints", help="Test individual endpoints separately")
+    _ = sub.add_parser("test-endpoints", help="Test individual endpoints separately")
     
     # Manual OTP verification
     verify_parser = sub.add_parser("verify-otp", help="Manually verify OTP with token")
     verify_parser.add_argument("token", help="OTP token to verify")
     
     # Get profile (requires previous authentication)
-    profile_parser = sub.add_parser("get-profile", help="Get user profile (requires previous authentication)")
+    _ = sub.add_parser("get-profile", help="Get user profile (requires previous authentication)")
     
     args = parser.parse_args(argv)
     

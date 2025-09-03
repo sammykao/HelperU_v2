@@ -3,7 +3,6 @@
 Debug script to test the complete authentication flow and identify token/session issues
 """
 import os
-import sys
 import requests
 import json
 from datetime import datetime
@@ -38,7 +37,7 @@ def test_auth_flow():
         return None
     
     # Step 2: Get OTP from user
-    print(f"\n📋 Step 2: Enter OTP Code")
+    print("\n📋 Step 2: Enter OTP Code")
     print(f"   Check your phone {test_phone} for the OTP code")
     otp_token = input("   Enter OTP code: ").strip()
     
@@ -47,7 +46,7 @@ def test_auth_flow():
         return None
     
     # Step 3: Verify OTP
-    print(f"\n🔐 Step 3: Verifying OTP")
+    print("\n🔐 Step 3: Verifying OTP")
     verify_url = f"{API_BASE_URL}/api/v1/auth/client/verify-otp"
     verify_payload = {"phone": test_phone, "token": otp_token}
     
@@ -70,7 +69,7 @@ def test_auth_flow():
             print("   ❌ No access token received")
             return None
             
-        print(f"   ✅ Got tokens:")
+        print("   ✅ Got tokens:")
         print(f"      User ID: {user_id}")
         print(f"      Access Token: {access_token[:50]}...")
         print(f"      Refresh Token: {refresh_token[:20]}...")
@@ -91,14 +90,14 @@ def test_token_validation(tokens):
         print("❌ No tokens to test")
         return
     
-    print(f"\n🧪 Step 4: Testing Token Validation")
+    print("\n🧪 Step 4: Testing Token Validation")
     print("=" * 50)
     
     access_token = tokens["access_token"]
-    user_id = tokens["user_id"]
+    _ = tokens["user_id"]
     
     # Test 1: Profile endpoint
-    print(f"\n📋 Test 1: Profile Endpoint")
+    print("\n📋 Test 1: Profile Endpoint")
     profile_url = f"{API_BASE_URL}/api/v1/profile/"
     profile_headers = {"Authorization": f"Bearer {access_token}"}
     
@@ -111,7 +110,7 @@ def test_token_validation(tokens):
             try:
                 profile_data = profile_resp.json()
                 print(f"   Profile Response: {json.dumps(profile_data, indent=2)}")
-            except:
+            except Exception:
                 print(f"   Profile Response Text: {profile_resp.text}")
         else:
             print(f"   Profile Response Text: {profile_resp.text}")
@@ -120,7 +119,7 @@ def test_token_validation(tokens):
         print(f"   Profile Error: {e}")
     
     # Test 2: Auth me endpoint (if it exists)
-    print(f"\n🔐 Test 2: Auth Me Endpoint")
+    print("\n🔐 Test 2: Auth Me Endpoint")
     auth_url = f"{API_BASE_URL}/api/v1/auth/me"
     auth_headers = {"Authorization": f"Bearer {access_token}"}
     
@@ -132,7 +131,7 @@ def test_token_validation(tokens):
             try:
                 auth_data = auth_resp.json()
                 print(f"   Auth Response: {json.dumps(auth_data, indent=2)}")
-            except:
+            except Exception:
                 print(f"   Auth Response Text: {auth_resp.text}")
         else:
             print(f"   Auth Response Text: {auth_resp.text}")
@@ -141,7 +140,7 @@ def test_token_validation(tokens):
         print(f"   Auth Error: {e}")
     
     # Test 3: Tasks endpoint
-    print(f"\n📝 Test 3: Tasks Endpoint")
+    print("\n📝 Test 3: Tasks Endpoint")
     tasks_url = f"{API_BASE_URL}/api/v1/tasks/"
     tasks_headers = {"Authorization": f"Bearer {access_token}"}
     
@@ -153,7 +152,7 @@ def test_token_validation(tokens):
             try:
                 tasks_data = tasks_resp.json()
                 print(f"   Tasks Response: {json.dumps(tasks_data, indent=2)}")
-            except:
+            except Exception:
                 print(f"   Tasks Response Text: {tasks_resp.text}")
         else:
             print(f"   Tasks Response Text: {tasks_resp.text}")
@@ -162,7 +161,7 @@ def test_token_validation(tokens):
         print(f"   Tasks Error: {e}")
     
     # Test 4: Raw token inspection
-    print(f"\n🔍 Test 4: Token Inspection")
+    print("\n🔍 Test 4: Token Inspection")
     try:
         # Decode JWT payload without verification
         parts = access_token.split('.')
@@ -173,7 +172,7 @@ def test_token_validation(tokens):
             decoded = base64.b64decode(payload)
             token_data = json.loads(decoded)
             
-            print(f"   Token Payload:")
+            print("   Token Payload:")
             print(f"      Issuer: {token_data.get('iss', 'N/A')}")
             print(f"      Subject: {token_data.get('sub', 'N/A')}")
             print(f"      Audience: {token_data.get('aud', 'N/A')}")
@@ -185,11 +184,11 @@ def test_token_validation(tokens):
             # Check if token is expired
             current_time = datetime.now().timestamp()
             if token_data.get('exp', 0) < current_time:
-                print(f"   ❌ Token has expired!")
+                print("   ❌ Token has expired!")
             else:
-                print(f"   ✅ Token is still valid")
+                print("   ✅ Token is still valid")
         else:
-            print(f"   ❌ Invalid JWT format")
+            print("   ❌ Invalid JWT format")
             
     except Exception as e:
         print(f"   Token Inspection Error: {e}")
@@ -205,12 +204,12 @@ def main():
         # Test token validation
         test_token_validation(tokens)
         
-        print(f"\n🎯 Debug Summary:")
+        print("\n🎯 Debug Summary:")
         print(f"   User ID: {tokens['user_id']}")
         print(f"   Access Token: {'✅' if tokens['access_token'] else '❌'}")
         print(f"   Refresh Token: {'✅' if tokens['refresh_token'] else '❌'}")
     else:
-        print(f"\n❌ Authentication flow failed")
+        print("\n❌ Authentication flow failed")
 
 if __name__ == "__main__":
     main()

@@ -6,7 +6,6 @@ import os
 import sys
 import requests
 import json
-import jwt
 from datetime import datetime
 
 # Configure API base URL
@@ -47,7 +46,7 @@ def test_jwt_validation(token: str):
         current_date = datetime.now()
         time_diff = exp_date - current_date
         
-        print(f"\n⏰ Token Expiration:")
+        print("\n⏰ Token Expiration:")
         print(f"   Expires at: {exp_date}")
         print(f"   Current time: {current_date}")
         print(f"   Time until expiry: {time_diff}")
@@ -58,7 +57,7 @@ def test_jwt_validation(token: str):
             print("   ✅ Token is still valid")
     
     # 3. Test token with profile endpoint
-    print(f"\n🧪 Testing Token with Profile Endpoint:")
+    print("\n🧪 Testing Token with Profile Endpoint:")
     url = f"{API_BASE_URL}/api/v1/profile/"
     headers = {"Authorization": f"Bearer {token}"}
     
@@ -74,7 +73,7 @@ def test_jwt_validation(token: str):
             try:
                 data = resp.json()
                 print(f"   Response Data: {json.dumps(data, indent=2)}")
-            except:
+            except Exception:
                 print(f"   Response Text: {resp.text}")
         else:
             print(f"   Response Text: {resp.text}")
@@ -83,7 +82,7 @@ def test_jwt_validation(token: str):
         print(f"   Error: {e}")
     
     # 4. Test token with different endpoints
-    print(f"\n🧪 Testing Token with Auth Endpoint:")
+    print("\n🧪 Testing Token with Auth Endpoint:")
     auth_url = f"{API_BASE_URL}/api/v1/auth/me"
     try:
         resp = requests.get(auth_url, headers=headers, timeout=30)
@@ -92,7 +91,7 @@ def test_jwt_validation(token: str):
             try:
                 data = resp.json()
                 print(f"   Auth Response: {json.dumps(data, indent=2)}")
-            except:
+            except Exception:
                 print(f"   Auth Response Text: {resp.text}")
     except Exception as e:
         print(f"   Auth Endpoint Error: {e}")

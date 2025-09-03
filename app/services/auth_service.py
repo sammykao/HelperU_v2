@@ -289,9 +289,7 @@ class AuthService:
             # Check if verification was successful
             if not auth_response.user:
                 raise HTTPException(status_code=400, detail="Invalid OTP token")
-
-            user_id = auth_response.user.id
-
+            
             return OTPResponse(
                 success=True, message=f"Email {email} verified successfully"
             )

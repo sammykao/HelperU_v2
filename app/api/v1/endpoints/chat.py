@@ -1,7 +1,5 @@
-from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
-from fastapi.responses import JSONResponse
 
 from app.deps.supabase import get_current_user, get_chat_service
 from app.schemas.auth import CurrentUser
@@ -175,7 +173,7 @@ async def websocket_endpoint(
         while True:
             try:
                 # Wait for messages from client
-                data = await websocket.receive_text()
+                _ = await websocket.receive_text()
                 
                 # Handle incoming WebSocket messages if needed
                 # For now, just keep connection alive

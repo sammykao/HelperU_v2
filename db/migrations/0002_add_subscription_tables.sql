@@ -94,10 +94,13 @@ BEGIN
     RETURN 999999; -- Unlimited for premium users
   ELSE
     -- For free users, get current month's count
-    SELECT COALESCE(post_count, 0) INTO monthly_count
-    FROM public.monthly_post_counts
-    WHERE user_id = user_uuid AND year_month = current_month;
-    
+    SELECT COALESCE((
+      SELECT post_count
+      FROM public.monthly_post_counts
+      WHERE user_id = user_uuid
+        AND year_month = current_month
+    ), 0)
+    INTO monthly_count;
     -- Free users get 1 post per month
     RETURN GREATEST(1 - monthly_count, 0);
   END IF;

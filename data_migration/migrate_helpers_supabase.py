@@ -9,9 +9,7 @@ import logging
 import click
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from typing import Dict, List, Any, Optional
-from datetime import datetime
-import json
+from typing import Dict, List, Any
 import os
 from dotenv import load_dotenv
 import re
@@ -169,7 +167,6 @@ class SupabasehelperMigrator:
             return phone
         
         # Remove all non-digit characters including Unicode special characters
-        import re
         digits_only = re.sub(r'[^\d]', '', phone)
         
         # Ensure it's 11 digits starting with 1 (database format)
@@ -462,7 +459,7 @@ class SupabasehelperMigrator:
                 if count > 0:
                     print(f"  - {category.replace('_', ' ').title()}: {count}")
             
-            print(f"\nFirst 5 detailed errors:")
+            print("\nFirst 5 detailed errors:")
             for error in self.migration_stats['errors'][:5]:
                 print(f"  - {error}")
             if len(self.migration_stats['errors']) > 5:
@@ -483,7 +480,7 @@ class SupabasehelperMigrator:
                 new_helper_count = cur.fetchone()[0]
                 
                 cur.execute("SELECT COUNT(*) FROM auth.users WHERE phone IS NOT NULL")
-                auth_user_count = cur.fetchone()[0]
+                _ = cur.fetchone()[0]
             
             # Check if counts match
             if new_helper_count == self.migration_stats['helpers_migrated']:

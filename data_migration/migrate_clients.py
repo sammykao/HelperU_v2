@@ -9,9 +9,7 @@ import logging
 import click
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from typing import Dict, List, Any, Optional
-from datetime import datetime
-import json
+from typing import Dict, List, Any
 
 # Configure logging
 logging.basicConfig(
@@ -327,7 +325,7 @@ class ClientMigrator:
                 new_client_count = cur.fetchone()[0]
                 
                 cur.execute("SELECT COUNT(*) FROM auth.users WHERE phone IS NOT NULL")
-                auth_user_count = cur.fetchone()[0]
+                _ = cur.fetchone()[0]
             
             # Check if counts match
             if new_client_count == self.migration_stats['clients_migrated']:

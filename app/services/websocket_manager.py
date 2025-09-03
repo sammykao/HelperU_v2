@@ -1,4 +1,3 @@
-import json
 from typing import Dict, Set
 from uuid import UUID
 from fastapi import WebSocket

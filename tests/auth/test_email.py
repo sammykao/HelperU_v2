@@ -1,4 +1,5 @@
-import smtplib, ssl
+import smtplib
+import ssl
 
 sender = "info@helperu.com"
 receiver = "kaosam77@gmail.com"   # replace with an inbox you control

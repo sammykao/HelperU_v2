@@ -52,7 +52,6 @@ $$;
 CREATE OR REPLACE FUNCTION public.count_tasks_matching_criteria(
     search_zip_code TEXT,
     search_query TEXT DEFAULT NULL,
-    search_status TEXT DEFAULT 'open',
     search_location_type TEXT DEFAULT NULL,
     min_hourly_rate DECIMAL DEFAULT NULL,
     max_hourly_rate DECIMAL DEFAULT NULL
@@ -69,12 +68,8 @@ BEGIN
     INTO task_count
     FROM public.tasks t
     WHERE 
-        -- Status filter based on completed_at
-        CASE 
-            WHEN search_status = 'open' THEN t.completed_at IS NULL
-            WHEN search_status = 'completed' THEN t.completed_at IS NOT NULL
-            ELSE TRUE
-        END
+        -- Only return tasks that are not completed (completed_at IS NULL)
+        t.completed_at IS NULL
         -- Query filter
         AND (
             search_query IS NULL 
@@ -104,7 +99,6 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_tasks_with_distance(
     search_zip_code TEXT,
     search_query TEXT DEFAULT NULL,
-    search_status TEXT DEFAULT 'open',
     search_location_type TEXT DEFAULT NULL,
     min_hourly_rate DECIMAL DEFAULT NULL,
     max_hourly_rate DECIMAL DEFAULT NULL,
@@ -169,12 +163,8 @@ BEGIN
     FROM public.tasks t
     JOIN public.zip_codes zc ON t.zip_code = zc.zip_code
     WHERE 
-        -- Status filter based on completed_at (no status field exists)
-        CASE 
-            WHEN search_status = 'open' THEN t.completed_at IS NULL
-            WHEN search_status = 'completed' THEN t.completed_at IS NOT NULL
-            ELSE TRUE
-        END
+        -- Only return tasks that are not completed (completed_at IS NULL)
+        t.completed_at IS NULL
         -- Query filter
         AND (
             search_query IS NULL 

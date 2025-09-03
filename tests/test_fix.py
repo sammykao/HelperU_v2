@@ -3,7 +3,6 @@
 Simple test script to verify the JWT token validation fix
 """
 import os
-import sys
 import requests
 import json
 
@@ -36,7 +35,7 @@ def test_auth_flow():
         return None
     
     # Step 2: Get OTP from user
-    print(f"\n📋 Step 2: Enter OTP Code")
+    print("\n📋 Step 2: Enter OTP Code")
     print(f"   Check your phone {test_phone} for the OTP code")
     otp_token = input("   Enter OTP code: ").strip()
     
@@ -45,7 +44,7 @@ def test_auth_flow():
         return None
     
     # Step 3: Verify OTP
-    print(f"\n🔐 Step 3: Verifying OTP")
+    print("\n🔐 Step 3: Verifying OTP")
     verify_url = f"{API_BASE_URL}/api/v1/auth/client/verify-otp"
     verify_payload = {"phone": test_phone, "token": otp_token}
     
@@ -66,7 +65,7 @@ def test_auth_flow():
             print("   ❌ No access token received")
             return None
             
-        print(f"   ✅ Got tokens:")
+        print("   ✅ Got tokens:")
         print(f"      User ID: {user_id}")
         print(f"      Access Token: {access_token[:50]}...")
         
@@ -82,11 +81,11 @@ def test_profile_access(tokens):
         print("❌ No tokens to test")
         return False
     
-    print(f"\n🧪 Step 4: Testing Profile Access (This should work now!)")
+    print("\n🧪 Step 4: Testing Profile Access (This should work now!)")
     print("=" * 50)
     
     access_token = tokens["access_token"]
-    user_id = tokens["user_id"]
+    _ = tokens["user_id"]
     
     # Test profile endpoint
     profile_url = f"{API_BASE_URL}/api/v1/profile/"
@@ -101,7 +100,7 @@ def test_profile_access(tokens):
             try:
                 profile_data = profile_resp.json()
                 print(f"   Profile Data: {json.dumps(profile_data, indent=2)}")
-            except:
+            except Exception:
                 print(f"   Profile Response: {profile_resp.text}")
             return True
         else:
@@ -110,7 +109,7 @@ def test_profile_access(tokens):
                 try:
                     error_data = profile_resp.json()
                     print(f"   Error Details: {json.dumps(error_data, indent=2)}")
-                except:
+                except Exception:
                     print(f"   Error Text: {profile_resp.text}")
             return False
             
@@ -130,14 +129,14 @@ def main():
         success = test_profile_access(tokens)
         
         if success:
-            print(f"\n🎉 SUCCESS! The fix worked!")
+            print("\n🎉 SUCCESS! The fix worked!")
             print(f"   User ID: {tokens['user_id']}")
-            print(f"   Profile endpoint is now accessible")
+            print("   Profile endpoint is now accessible")
         else:
-            print(f"\n❌ The fix didn't work completely")
-            print(f"   Profile endpoint still has issues")
+            print("\n❌ The fix didn't work completely")
+            print("   Profile endpoint still has issues")
     else:
-        print(f"\n❌ Authentication flow failed")
+        print("\n❌ Authentication flow failed")
 
 if __name__ == "__main__":
     main()

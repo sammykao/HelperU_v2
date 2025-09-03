@@ -28,12 +28,8 @@ class TaskService:
         """Create a new task with validation"""
         try:
             # Check if user is a client
-            client = (
-                self.admin_client.table("clients")
-                .select("*")
-                .eq("id", client_id)
-                .execute()
-            )
+
+            client = self.admin_client.table("clients").select("*").eq("id", client_id).execute()
             if not client.data:
                 raise HTTPException(status_code=404, detail="Client not found")
 
@@ -48,7 +44,9 @@ class TaskService:
             task_payload["client_id"] = client_id
 
             # Create the task
+
             result = self.admin_client.table("tasks").insert(task_payload).execute()
+
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to create task")
 
@@ -71,12 +69,7 @@ class TaskService:
     async def get_task(self, task_id: str) -> Optional[TaskResponse]:
         """Get a single task by ID"""
         try:
-            result = (
-                await self.admin_client.table("tasks")
-                .select("*")
-                .eq("id", task_id)
-                .execute()
-            )
+            result = self.admin_client.table("tasks").select("*").eq("id", task_id).execute()
             if not result.data:
                 return None
 
@@ -106,12 +99,7 @@ class TaskService:
                 )
 
             # Update the task
-            result = (
-                await self.admin_client.table("tasks")
-                .update(request.model_dump())
-                .eq("id", task_id)
-                .execute()
-            )
+            result = self.admin_client.table("tasks").update(request.model_dump()).eq("id", task_id).execute()
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to update task")
 
@@ -146,12 +134,7 @@ class TaskService:
                 )
 
             # Delete the task
-            result = (
-                await self.admin_client.table("tasks")
-                .delete()
-                .eq("id", task_id)
-                .execute()
-            )
+            result = self.admin_client.table("tasks").delete().eq("id", task_id).execute()
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to delete task")
 
@@ -170,6 +153,7 @@ class TaskService:
         """Get tasks for a specific user (client)"""
         try:
             # Get total count
+
             count_result = (
                 self.admin_client.table("tasks")
                 .select("id", count="exact")
@@ -187,7 +171,6 @@ class TaskService:
                 .range(offset, offset + limit - 1)
                 .execute()
             )
-
 
             tasks = []
             for task in result.data:
@@ -210,12 +193,13 @@ class TaskService:
             # First, get the total count efficiently without pulling all data
             count_params = search_request.model_dump(exclude={"limit", "offset"})
 
-            count_result = await self.admin_client.rpc(
-                "count_tasks_matching_criteria", count_params
+            count_result = self.admin_client.rpc(
+                "count_tasks_matching_criteria",
+                count_params
             ).execute()
-
-            total_count = count_result.data[0] if count_result.data else 0
-
+            
+            total_count = count_result.data if count_result else 0
+            
             # If no tasks match criteria, return empty response
             if total_count == 0:
                 return TaskSearchListResponse(
@@ -224,9 +208,10 @@ class TaskService:
                     limit=search_request.limit,
                     offset=search_request.offset,
                 )
-
-            result = await self.admin_client.rpc(
-                "get_tasks_with_distance", search_request.model_dump()
+            
+            result = self.admin_client.rpc(
+                "get_tasks_with_distance",
+                search_request.model_dump()
             ).execute()
 
             if not result.data:
@@ -269,17 +254,10 @@ class TaskService:
                 raise HTTPException(status_code=400, detail="Task already completed")
 
             # Update task status
-            result = (
-                await self.admin_client.table("tasks")
-                .update(
-                    {
-                        "completed_at": "now()",
-                    }
-                )
-                .eq("id", task_id)
-                .execute()
-            )
-
+            result = self.admin_client.table("tasks").update({
+                "completed_at": "now()",
+            }).eq("id", task_id).execute()
+            
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to complete task")
 
@@ -298,13 +276,10 @@ class TaskService:
         """Update client's post count"""
         try:
             # Update client's post count
-            result = (
-                await self.admin_client.table("clients")
-                .update({"number_of_posts": "number_of_posts + 1"})
-                .eq("id", client_id)
-                .execute()
-            )
-
+            result = self.admin_client.table("clients").update({
+                "number_of_posts": "number_of_posts + 1"
+            }).eq("id", client_id).execute()
+            
             if not result.data:
                 raise HTTPException(
                     status_code=500, detail="Failed to update client post count"
@@ -322,7 +297,7 @@ class TaskService:
     async def get_available_tasks(self) -> Optional[PublicTaskResponse]:
         try:
             # query non sensitive information from tasks table
-            result = (
+            result = await (
                 self.admin_client.table("tasks")
                 .select(
                     "id, title, description, location_type, zip_code, hourly_rate, created_at"

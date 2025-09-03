@@ -1,6 +1,5 @@
 import stripe
 from app.core.config import settings
-from app.services.supabase_client import get_admin_supabase
 from supabase import Client
 from fastapi import HTTPException
 from datetime import datetime
@@ -30,7 +29,7 @@ class StripeService:
             )
             
             # Store customer ID in Supabase
-            await self.admin_client.table("subscriptions").upsert({
+            self.admin_client.table("subscriptions").upsert({
                 "user_id": user_id,
                 "stripe_customer_id": customer.id,
                 "plan": "free",
@@ -45,7 +44,7 @@ class StripeService:
         """Create a subscription for a user"""
         try:
             # Get user's Stripe customer ID
-            result = await self.admin_client.table("subscriptions").select("stripe_customer_id").eq("user_id", user_id).execute()
+            result = self.admin_client.table("subscriptions").select("stripe_customer_id").eq("user_id", user_id).execute()
             
             if not result.data:
                 raise HTTPException(status_code=404, detail="User not found in subscriptions table")
@@ -65,7 +64,7 @@ class StripeService:
             )
             
             # Update subscription in Supabase
-            await self.admin_client.table("subscriptions").upsert({
+            self.admin_client.table("subscriptions").upsert({
                 "user_id": user_id,
                 "stripe_subscription_id": subscription.id,
                 "stripe_customer_id": customer_id,
@@ -89,7 +88,7 @@ class StripeService:
         """Cancel a user's subscription"""
         try:
             # Get subscription ID
-            result = await self.admin_client.table("subscriptions").select("stripe_subscription_id").eq("user_id", user_id).execute()
+            result = self.admin_client.table("subscriptions").select("stripe_subscription_id").eq("user_id", user_id).execute()
             
             if not result.data or not result.data[0]["stripe_subscription_id"]:
                 raise HTTPException(status_code=404, detail="No active subscription found")
@@ -103,7 +102,7 @@ class StripeService:
             )
             
             # Update in Supabase
-            await self.admin_client.table("subscriptions").update({
+            self.admin_client.table("subscriptions").update({
                 "cancel_at_period_end": True
             }).eq("user_id", user_id).execute()
             
@@ -116,7 +115,7 @@ class StripeService:
     async def get_subscription_status(self, user_id: str) -> SubscriptionStatus:
         """Get current subscription status for a user"""
         try:
-            result = await self.admin_client.table("subscriptions").select("*").eq("user_id", user_id).execute()
+            result = self.admin_client.table("subscriptions").select("*").eq("user_id", user_id).execute()
             
             if not result.data:
                 return SubscriptionStatus(
@@ -142,10 +141,11 @@ class StripeService:
             raise HTTPException(status_code=500, detail=f"Failed to get subscription status: {str(e)}")
 
     async def get_monthly_post_limit(self, user_id: str) -> int:
-        """Get monthly post limit for a user"""
+        """Get remaining posts before reaching the limit for a user"""
         try:
-            result = await self.admin_client.rpc('get_user_post_limit', {'user_uuid': user_id}).execute()
-            return result.data[0]["get_user_post_limit"]
+            result = self.admin_client.rpc('get_user_post_limit', {'user_uuid': user_id}).execute()
+            print("RESULYS", result, "RESSSS")
+            return result.data
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to get user post limit: {str(e)}")
 
@@ -153,7 +153,7 @@ class StripeService:
         """Get monthly post count for a user"""
         try:
             current_month = datetime.now().strftime("%Y-%m")
-            result = await self.admin_client.table("monthly_post_counts").select("post_count").eq("user_id", user_id).eq("year_month", current_month).execute()
+            result = self.admin_client.table("monthly_post_counts").select("post_count").eq("user_id", user_id).eq("year_month", current_month).execute()
             return result.data[0]["post_count"] if result.data else 0
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to get user post count: {str(e)}")
@@ -161,7 +161,7 @@ class StripeService:
     async def update_monthly_post_count(self, user_id: str) -> bool:
         """Update monthly post count for a user"""
         try:
-            await self.admin_client.rpc('increment_monthly_post_count', {'user_uuid': user_id}).execute()
+            self.admin_client.rpc('increment_monthly_post_count', {'user_uuid': user_id}).execute()
             return True
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to update user post count: {str(e)}")
@@ -175,7 +175,7 @@ class StripeService:
             )
             
             # Store event in database
-            await self.admin_client.table("subscription_events").insert({
+            self.admin_client.table("subscription_events").insert({
                 "stripe_event_id": event.id,
                 "event_type": event.type,
                 "data": event.data.object
@@ -201,7 +201,7 @@ class StripeService:
         """Handle subscription update events"""
         try:
             # Update subscription in Supabase
-            await self.admin_client.table("subscriptions").update({
+            self.admin_client.table("subscriptions").update({
                 "status": subscription_data.status,
                 "current_period_start": subscription_data.current_period_start,
                 "current_period_end": subscription_data.current_period_end,
@@ -214,7 +214,7 @@ class StripeService:
         """Handle subscription deletion events"""
         try:
             # Update subscription status in Supabase
-            await self.admin_client.table("subscriptions").update({
+            self.admin_client.table("subscriptions").update({
                 "status": "canceled"
             }).eq("stripe_subscription_id", subscription_data.id).execute()
         except Exception as e:

@@ -333,8 +333,8 @@ class HelperV2Migrator:
                         """
                         
                         # Set default values for required auth fields
-                        raw_app_meta_data = json.dumps({"provider": "email", "providers": ["email"]})
-                        raw_user_meta_data = json.dumps({})
+                        _ = json.dumps({"provider": "email", "providers": ["email"]})
+                        _ = json.dumps({})
                         
                         cursor.execute(insert_query, (
                             user_id, email, normalized_phone, current_time, current_time
