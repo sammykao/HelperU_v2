@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 
 from app.deps.supabase import get_current_user, get_profile_service, get_auth_service
 from app.services.auth_service import AuthService
@@ -18,18 +19,15 @@ from app.schemas.auth import (
     HelperVerificationWebhookData,
     HelperEmailVerificationResponse,
     LogoutResponse,
-    CurrentUser
+    CurrentUser,
 )
 
 router = APIRouter()
 
 
-
-
 @router.post("/client/signup", response_model=OTPResponse)
 async def client_signup(
-    request: ClientSignupRequest,
-    auth_service: AuthService = Depends(get_auth_service)
+    request: ClientSignupRequest, auth_service: AuthService = Depends(get_auth_service)
 ):
     """Sign up a new client with phone number"""
     try:
@@ -40,17 +38,25 @@ async def client_signup(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to send OTP: {str(e)}"
+            detail=f"Failed to send OTP: {str(e)}",
         )
 
 
 @router.post("/client/signin", response_model=OTPResponse)
 async def client_signin(
-    request: PhoneOTPRequest,
-    auth_service: AuthService = Depends(get_auth_service)
+    request: PhoneOTPRequest, auth_service: AuthService = Depends(get_auth_service)
 ):
     """Sign in existing client with phone number"""
     try:
+        is_existing_client = await auth_service.check_account_existence(request.phone)
+
+        print(is_existing_client)
+
+        if not is_existing_client.does_exist:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Client not found"
+            )
+
         result = await auth_service.send_client_otp(request.phone)
         return result
     except HTTPException:
@@ -58,14 +64,14 @@ async def client_signin(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to send OTP: {str(e)}"
+            detail=f"Failed to send OTP: {str(e)}",
         )
 
 
 @router.post("/client/verify-otp", response_model=ClientProfileResponse)
 async def client_verify_otp(
     request: PhoneOTPVerifyRequest,
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """Verify OTP for client signup/signin"""
     try:
@@ -76,7 +82,7 @@ async def client_verify_otp(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to verify OTP: {str(e)}"
+            detail=f"Failed to verify OTP: {str(e)}",
         )
 
 
@@ -84,7 +90,7 @@ async def client_verify_otp(
 async def client_complete_profile(
     request: ClientProfileUpdateRequest,
     current_user: CurrentUser = Depends(get_current_user),
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """Complete client profile with names"""
     try:
@@ -96,14 +102,13 @@ async def client_complete_profile(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to complete profile: {str(e)}"
+            detail=f"Failed to complete profile: {str(e)}",
         )
 
 
 @router.post("/helper/signup", response_model=HelperAccountResponse)
 async def helper_signup(
-    request: HelperSignupRequest,
-    auth_service: AuthService = Depends(get_auth_service)
+    request: HelperSignupRequest, auth_service: AuthService = Depends(get_auth_service)
 ):
     """Sign up a new helper with email and phone"""
     try:
@@ -114,14 +119,13 @@ async def helper_signup(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create helper account: {str(e)}"
+            detail=f"Failed to create helper account: {str(e)}",
         )
 
 
 @router.post("/helper/signin", response_model=OTPResponse)
 async def helper_signin(
-    request: PhoneOTPRequest,
-    auth_service: AuthService = Depends(get_auth_service)
+    request: PhoneOTPRequest, auth_service: AuthService = Depends(get_auth_service)
 ):
     """Sign in existing helper with phone number"""
     try:
@@ -132,14 +136,14 @@ async def helper_signin(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to send OTP: {str(e)}"
+            detail=f"Failed to send OTP: {str(e)}",
         )
 
 
 @router.post("/helper/verify-otp", response_model=HelperProfileResponse)
 async def helper_verify_otp(
     request: PhoneOTPVerifyRequest,
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """Verify OTP for helper signin"""
     try:
@@ -150,7 +154,7 @@ async def helper_verify_otp(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to verify OTP: {str(e)}"
+            detail=f"Failed to verify OTP: {str(e)}",
         )
 
 
@@ -158,7 +162,7 @@ async def helper_verify_otp(
 async def helper_complete_profile(
     request: HelperProfileUpdateRequest,
     current_user: CurrentUser = Depends(get_current_user),
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """Complete helper profile with all details"""
     try:
@@ -170,14 +174,14 @@ async def helper_complete_profile(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to complete profile: {str(e)}"
+            detail=f"Failed to complete profile: {str(e)}",
         )
 
 
 @router.post("/helper/complete-verification", response_model=HelperVerificationResponse)
 async def helper_complete_verification(
     user_data: HelperVerificationWebhookData,
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """Complete helper verification (called by Supabase webhook)"""
     try:
@@ -188,39 +192,39 @@ async def helper_complete_verification(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to complete verification: {str(e)}"
+            detail=f"Failed to complete verification: {str(e)}",
         )
 
 
 @router.get("/profile-status", response_model=ProfileStatusResponse)
 async def get_profile_status(
     current_user: CurrentUser = Depends(get_current_user),
-    profile_service = Depends(get_profile_service)
+    profile_service=Depends(get_profile_service),
 ):
     """Get current user's profile completion status"""
     try:
         user_id = current_user.id
         profile_status = await profile_service.get_user_profile_status(user_id)
-        
+
         return ProfileStatusResponse(
             profile_completed=profile_status.profile_completed,
             email_verified=profile_status.email_verified,
             phone_verified=profile_status.phone_verified,
-            user_type=profile_status.user_type
+            user_type=profile_status.user_type,
         )
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get profile status: {str(e)}"
+            detail=f"Failed to get profile status: {str(e)}",
         )
 
 
 @router.post("/logout", response_model=LogoutResponse)
 async def logout(
     current_user: CurrentUser = Depends(get_current_user),
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """Logout current user"""
     try:
@@ -232,21 +236,20 @@ async def logout(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to logout: {str(e)}"
+            detail=f"Failed to logout: {str(e)}",
         )
 
 
 @router.post("/resend-email-verification")
 async def resend_email_verification(
-    request: dict,
-    auth_service: AuthService = Depends(get_auth_service)
+    request: dict, auth_service: AuthService = Depends(get_auth_service)
 ):
     """Resend email verification link"""
     try:
         email = request.get("email")
         if not email:
             raise HTTPException(status_code=400, detail="Email is required")
-        
+
         result = await auth_service.resend_email_verification(email)
         return result
     except HTTPException:
@@ -254,25 +257,24 @@ async def resend_email_verification(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to resend email verification: {str(e)}"
+            detail=f"Failed to resend email verification: {str(e)}",
         )
 
 
 @router.post("/verify-email-otp", response_model=OTPResponse)
 async def verify_email_otp(
-    request: dict,
-    auth_service: AuthService = Depends(get_auth_service)
+    request: dict, auth_service: AuthService = Depends(get_auth_service)
 ):
     """Verify email using OTP code"""
     try:
         email = request.get("email")
         otp_code = request.get("otp_code")
-        
+
         if not email:
             raise HTTPException(status_code=400, detail="Email is required")
         if not otp_code:
             raise HTTPException(status_code=400, detail="OTP code is required")
-        
+
         result = await auth_service.verify_email_otp(email, otp_code)
         return result
     except HTTPException:
@@ -280,14 +282,16 @@ async def verify_email_otp(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to verify email OTP: {str(e)}"
+            detail=f"Failed to verify email OTP: {str(e)}",
         )
 
 
-@router.get("/helper/email-verification-status/{user_id}", response_model=HelperEmailVerificationResponse)
+@router.get(
+    "/helper/email-verification-status/{user_id}",
+    response_model=HelperEmailVerificationResponse,
+)
 async def check_helper_email_verification(
-    user_id: str,
-    auth_service: AuthService = Depends(get_auth_service)
+    user_id: str, auth_service: AuthService = Depends(get_auth_service)
 ):
     """Check if a helper's email is verified by user ID"""
     try:
@@ -298,5 +302,5 @@ async def check_helper_email_verification(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to check email verification: {str(e)}"
+            detail=f"Failed to check email verification: {str(e)}",
         )

@@ -1,3 +1,4 @@
+from app.services import profile_service
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 
@@ -12,12 +13,14 @@ security = HTTPBearer()
 @router.get("/")
 async def get_user_profile(
     current_user: str = Depends(get_current_user),
-    profile_service: ProfileService = Depends(get_profile_service)
+    profile_service: ProfileService = Depends(get_profile_service),
 ):
     """Get current user's profile"""
     try:
         profile_status = await profile_service.get_user_profile_status(current_user.id)
-        
+
+        print(profile_status)
+
         if profile_status.user_type == "client":
             profile = await profile_service.get_client_profile(current_user.id)
         elif profile_status.user_type == "helper":
@@ -25,11 +28,11 @@ async def get_user_profile(
         else:
             # Both user types; no concrete profile to return
             profile = None
-        
+
         return {
             "success": True,
             "profile_status": profile_status.model_dump(),
-            "profile": profile.model_dump() if profile else None
+            "profile": profile.model_dump() if profile else None,
         }
 
     except HTTPException:
@@ -37,7 +40,7 @@ async def get_user_profile(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get profile: {str(e)}"
+            detail=f"Failed to get profile: {str(e)}",
         )
 
 
@@ -45,7 +48,7 @@ async def get_user_profile(
 async def update_client_profile(
     request: ClientProfileUpdateRequest,
     current_user: str = Depends(get_current_user),
-    profile_service: ProfileService = Depends(get_profile_service)
+    profile_service: ProfileService = Depends(get_profile_service),
 ):
     """Update client profile"""
     try:
@@ -54,24 +57,26 @@ async def update_client_profile(
         if profile_status.user_type != "client":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only clients can update client profiles"
+                detail="Only clients can update client profiles",
             )
-        
+
         profile_data = {
             "first_name": request.first_name,
             "last_name": request.last_name,
         }
         if request.pfp_url:
             profile_data["pfp_url"] = request.pfp_url
-        
-        result = await profile_service.update_client_profile(current_user.id, profile_data)
+
+        result = await profile_service.update_client_profile(
+            current_user.id, profile_data
+        )
         return result
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update profile: {str(e)}"
+            detail=f"Failed to update profile: {str(e)}",
         )
 
 
@@ -79,7 +84,7 @@ async def update_client_profile(
 async def update_helper_profile(
     request: HelperProfileUpdateRequest,
     current_user: str = Depends(get_current_user),
-    profile_service: ProfileService = Depends(get_profile_service)
+    profile_service: ProfileService = Depends(get_profile_service),
 ):
     """Update helper profile"""
     try:
@@ -88,9 +93,9 @@ async def update_helper_profile(
         if profile_status.user_type != "helper":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only helpers can update helper profiles"
+                detail="Only helpers can update helper profiles",
             )
-        
+
         profile_data = {
             "first_name": request.first_name,
             "last_name": request.last_name,
@@ -101,34 +106,50 @@ async def update_helper_profile(
         }
         if request.pfp_url:
             profile_data["pfp_url"] = request.pfp_url
-        
-        result = await profile_service.update_helper_profile(current_user.id, profile_data)
+
+        result = await profile_service.update_helper_profile(
+            current_user.id, profile_data
+        )
         return result
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update profile: {str(e)}"
+            detail=f"Failed to update profile: {str(e)}",
         )
 
 
 @router.get("/status")
 async def get_profile_status(
     current_user: str = Depends(get_current_user),
-    profile_service: ProfileService = Depends(get_profile_service)
+    profile_service: ProfileService = Depends(get_profile_service),
 ):
     """Get current user's profile completion status"""
     try:
         profile_status = await profile_service.get_user_profile_status(current_user.id)
-        return {
-            "success": True,
-            "profile_status": profile_status.model_dump()
-        }
+        return {"success": True, "profile_status": profile_status.model_dump()}
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get profile status: {str(e)}"
+            detail=f"Failed to get profile status: {str(e)}",
+        )
+
+
+@router.post("/delete-profile")
+async def delete_profile(
+    current_user: str = Depends(get_current_user),
+    profile_service: ProfileService = Depends(get_profile_service),
+):
+    try:
+        await profile_service.delete_profile(current_user.id)
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete profile: {str(e)}",
         )

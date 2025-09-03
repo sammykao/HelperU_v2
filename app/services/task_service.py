@@ -28,6 +28,7 @@ class TaskService:
         """Create a new task with validation"""
         try:
             # Check if user is a client
+
             client = self.admin_client.table("clients").select("*").eq("id", client_id).execute()
             if not client.data:
                 raise HTTPException(status_code=404, detail="Client not found")
@@ -39,8 +40,13 @@ class TaskService:
                     status_code=400, detail="User has reached post limit."
                 )
 
+            task_payload = request.model_dump()
+            task_payload["client_id"] = client_id
+
             # Create the task
-            result = self.admin_client.table("tasks").insert(request.model_dump()).execute()
+
+            result = self.admin_client.table("tasks").insert(task_payload).execute()
+
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to create task")
 
@@ -147,13 +153,25 @@ class TaskService:
         """Get tasks for a specific user (client)"""
         try:
             # Get total count
-            count_result = self.admin_client.table("tasks").select("id", count="exact").eq("client_id", user_id).execute()
-            print("COUNTT RES:", count_result)
-            total_count = count_result.count if hasattr(count_result, 'count') else 0
-            
+
+            count_result = (
+                self.admin_client.table("tasks")
+                .select("id", count="exact")
+                .eq("client_id", user_id)
+                .execute()
+            )
+            total_count = count_result.count if hasattr(count_result, "count") else 0
+
             # Get paginated tasks
-            result = self.admin_client.table("tasks").select("*").eq("client_id", user_id).order("created_at", desc=True).range(offset, offset + limit - 1).execute()
-            print("RESULT:", result)
+            result = (
+                self.admin_client.table("tasks")
+                .select("*")
+                .eq("client_id", user_id)
+                .order("created_at", desc=True)
+                .range(offset, offset + limit - 1)
+                .execute()
+            )
+
             tasks = []
             for task in result.data:
                 tasks.append(TaskResponse(**task))
@@ -291,7 +309,11 @@ class TaskService:
             )
 
             if not result or not result.data:
-                return None
+                return PublicTaskResponse(
+                    result=[],
+                    limit=20,
+                    total_count=0,
+                )
 
             tasks = [PublicTask(**task) for task in result.data]
             response = PublicTaskResponse(
