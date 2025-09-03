@@ -1,4 +1,3 @@
-from app.services import stripe_service
 from supabase import Client
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials

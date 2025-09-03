@@ -90,8 +90,7 @@ Since the user is not logged in, you can only access:
 Remember: You are the first point of contact for potential users. Make a great first impression, address their concerns, and help them understand the value of HelperU. Guide them toward creating accounts to access the full platform experience!"""
 
     else:
-        # Get user type from profile service
-        profile_service = state.get("user_type", "unknown")
+        user_type = state.get("user_type", "unknown")
         # Build user context string
         user_context = f"""
 User ID: {user.id}

@@ -1,4 +1,3 @@
-from app.services import profile_service
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 

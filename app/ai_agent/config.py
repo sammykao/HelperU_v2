@@ -1,8 +1,6 @@
 from langchain.tools.base import BaseTool
 from langchain_openai import ChatOpenAI
 from app.core.config import settings
-import functools
-from langchain.tools import StructuredTool
 
 MODEL_NAME = "gpt-4o-mini"
 TEMPERATURE = 0.4

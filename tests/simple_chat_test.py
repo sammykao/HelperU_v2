@@ -5,7 +5,6 @@ Type messages endlessly and get responses from the AI agent
 """
 import os
 import requests
-import time
 from typing import Optional
 
 # Configure API base URL

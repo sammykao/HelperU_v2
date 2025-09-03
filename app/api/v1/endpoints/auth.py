@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
 
 from app.deps.supabase import get_current_user, get_profile_service, get_auth_service
 from app.services.auth_service import AuthService
