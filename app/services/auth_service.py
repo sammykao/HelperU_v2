@@ -535,8 +535,6 @@ class AuthService:
                 .execute()
             )
 
-            print(existing_client)
-
             if not existing_client.data:
                 return ClientAccountExistanceResponse(does_exist=False)
 
@@ -548,3 +546,33 @@ class AuthService:
                 status_code=500,
                 detail=f"Failed to check account existence: {str(exc)}",
             )
+
+    async def update_helper_email(self, user_id: str, email: str) -> OTPResponse:
+        """Update helper email"""
+        try:
+            self.admin_client.auth.admin.update_user_by_id(user_id, {"email": email})
+            result = await self.resend_email_verification(email)
+            if not result.success:
+                raise HTTPException(status_code=500, detail="Failed to resend email verification")
+            return result
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Failed to update helper email: {str(exc)}")
+
+    async def check_helper_completion(self, user_id: str) -> bool:
+        """Check if a helper account exists by email"""
+        try:
+            existing_helper = (
+                self.admin_client.table("helpers")
+                .select("id")
+                .eq("id", user_id)
+                .limit(1)
+                .execute()
+            )
+            if not existing_helper.data:
+                return False
+            return True
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Failed to check helper existence: {str(exc)}")
+        

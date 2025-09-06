@@ -19,6 +19,7 @@ from app.schemas.auth import (
     HelperEmailVerificationResponse,
     LogoutResponse,
     CurrentUser,
+    ClientAccountExistanceResponse
 )
 
 router = APIRouter()
@@ -48,9 +49,6 @@ async def client_signin(
     """Sign in existing client with phone number"""
     try:
         is_existing_client = await auth_service.check_account_existence(request.phone)
-
-        print(is_existing_client)
-
         if not is_existing_client.does_exist:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Client not found"
@@ -103,6 +101,22 @@ async def client_complete_profile(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to complete profile: {str(e)}",
         )
+
+@router.get("/client/check-completion", response_model=ClientAccountExistanceResponse)
+async def check_helper_existence(
+    current_user: CurrentUser = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    """Check if a client account exists"""
+    try:
+        phone = current_user.phone
+        result = await auth_service.check_account_existence(phone)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to check helper existence: {str(e)}")
+
 
 
 @router.post("/helper/signup", response_model=HelperAccountResponse)
@@ -303,3 +317,35 @@ async def check_helper_email_verification(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to check email verification: {str(e)}",
         )
+
+@router.post("/helper/update-email", response_model=OTPResponse)
+async def update_helper_email(
+    request: dict, auth_service: AuthService = Depends(get_auth_service), current_user: CurrentUser = Depends(get_current_user)
+):
+    """Update helper email"""
+    try:
+        email = request.get("email")
+        if not email:
+            raise HTTPException(status_code=400, detail="Email is required")
+        user_id = request.get("user_id") or current_user.id
+        result = await auth_service.update_helper_email(user_id, email)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to update helper email: {str(e)}")
+
+
+@router.get("/helper/check-completion", response_model=bool)
+async def check_helper_completion(
+    current_user: CurrentUser = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    """Check if a helper account is complete"""
+    try:
+        result = await auth_service.check_helper_completion(current_user.id)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to check helper completion: {str(e)}")
