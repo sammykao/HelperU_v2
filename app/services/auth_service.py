@@ -225,6 +225,7 @@ class AuthService:
                     "phone": normalized_phone,
                 }
             )
+            self.public_client.auth.resend({"type": "signup", "email": email})
 
             return HelperAccountResponse(
                 success=True,
