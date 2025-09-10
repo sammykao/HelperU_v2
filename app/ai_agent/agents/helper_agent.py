@@ -68,7 +68,6 @@ Remember: You are helping clients find qualified helpers and helping helpers get
             model=self.llm,
             tools=self.tools,
             prompt=self.SYSTEM_INSTRUCTION,
-            debug=True
         )
 
     async def run(self, message: str):

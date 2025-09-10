@@ -51,9 +51,7 @@ class TaskService:
                 raise HTTPException(status_code=500, detail="Failed to create task")
 
             # Update client's post count (fire and forget) monthly and total
-            asyncio.create_task(
-                self.stripe_service.update_monthly_post_count(client_id)
-            )
+            asyncio.create_task(self.stripe_service.update_monthly_post_count(client_id))
             asyncio.create_task(self.update_client_post_count(client_id))
             # Return the created task
             created_task = result.data[0]
@@ -275,9 +273,18 @@ class TaskService:
     async def update_client_post_count(self, client_id: str) -> None:
         """Update client's post count"""
         try:
+            # First get the current count
+            current_result = self.admin_client.table("clients").select("number_of_posts").eq("id", client_id).execute()
+            
+            if not current_result.data:
+                raise HTTPException(status_code=404, detail="Client not found")
+            
+            current_count = current_result.data[0].get("number_of_posts", 0)
+            new_count = current_count + 1
+            
             # Update client's post count
             result = self.admin_client.table("clients").update({
-                "number_of_posts": "number_of_posts + 1"
+                "number_of_posts": new_count
             }).eq("id", client_id).execute()
             
             if not result.data:

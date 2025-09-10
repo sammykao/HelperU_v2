@@ -81,7 +81,6 @@ Remember: You are helping clients get their tasks done efficiently and helping h
             model=self.llm,
             tools=self.tools,
             prompt=self.SYSTEM_INSTRUCTION,
-            debug=True
         )
 
       

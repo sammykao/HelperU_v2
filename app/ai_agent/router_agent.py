@@ -3,6 +3,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from app.ai_agent.config import create_llm
 from app.deps.supabase import get_profile_service
 from app.schemas.auth import CurrentUser
+from app.schemas.ai import AIResponse
 from app.ai_agent.agents.task_agent import TaskAgent
 from app.ai_agent.agents.profile_agent import ProfileAgent
 from app.ai_agent.agents.helper_agent import HelperAgent
@@ -567,16 +568,19 @@ class HelperURouter:
                             response_text = content
                             agent_used = name or agent_used
                             break
-
+            
+            print(agent_used)
             if not response_text:
                 response_text = ""
 
-            return {
-                "response": response_text,
-                "thread_id": thread_id,
-                "agent_used": agent_used or "supervisor",
-                "metadata": None,
-            }
+            return AIResponse(
+                response=response_text,
+                thread_id=thread_id,
+                agent_used=agent_used or "supervisor",
+                metadata=None,
+                success=True,
+            )
+
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

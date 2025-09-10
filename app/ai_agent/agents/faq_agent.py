@@ -49,7 +49,6 @@ Always be helpful, provide detailed answers, and guide users to the most relevan
             model=self.llm,
             tools=self.tools,
             prompt=self.SYSTEM_INSTRUCTION,
-            debug=True
         )
         
     
