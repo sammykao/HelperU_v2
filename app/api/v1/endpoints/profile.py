@@ -18,20 +18,21 @@ async def get_user_profile(
     try:
         profile_status = await profile_service.get_user_profile_status(current_user.id)
 
-        print(profile_status)
-
         if profile_status.user_type == "client":
-            profile = await profile_service.get_client_profile(current_user.id)
+            profile = { "client": await profile_service.get_client_profile(current_user.id) }
         elif profile_status.user_type == "helper":
-            profile = await profile_service.get_helper_profile(current_user.id)
+            profile = { "helper": await profile_service.get_helper_profile(current_user.id) }
         else:
             # Both user types; no concrete profile to return
-            profile = None
+            profile = { 
+                "client": await profile_service.get_client_profile(current_user.id) or None, 
+                "helper": await profile_service.get_helper_profile(current_user.id) or Nonex    
+            }
 
         return {
             "success": True,
             "profile_status": profile_status.model_dump(),
-            "profile": profile.model_dump() if profile else None,
+            "profile": profile,
         }
 
     except HTTPException:
@@ -59,12 +60,12 @@ async def update_client_profile(
                 detail="Only clients can update client profiles",
             )
 
-        profile_data = {
-            "first_name": request.first_name,
-            "last_name": request.last_name,
-        }
-        if request.pfp_url:
-            profile_data["pfp_url"] = request.pfp_url
+        pfp_url = request.pfp_url or None
+        profile_data = ProfileUpdateData(
+            first_name=request.first_name,
+            last_name=request.last_name,
+            pfp_url=pfp_url,
+        )
 
         result = await profile_service.update_client_profile(
             current_user.id, profile_data
@@ -94,17 +95,17 @@ async def update_helper_profile(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only helpers can update helper profiles",
             )
+        pfp_url = request.pfp_url or None
 
-        profile_data = {
-            "first_name": request.first_name,
-            "last_name": request.last_name,
-            "college": request.college,
-            "bio": request.bio,
-            "graduation_year": request.graduation_year,
-            "zip_code": request.zip_code,
-        }
-        if request.pfp_url:
-            profile_data["pfp_url"] = request.pfp_url
+        profile_data = ProfileUpdateData(
+            first_name=request.first_name,
+            last_name=request.last_name,
+            college=request.college,
+            bio=request.bio,
+            graduation_year=request.graduation_year,
+            zip_code=request.zip_code,
+            pfp_url=pfp_url,
+        )
 
         result = await profile_service.update_helper_profile(
             current_user.id, profile_data

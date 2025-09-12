@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
+from app.schemas.helper import HelperResponse
 
 
 class InvitationResponse(BaseModel):
@@ -10,6 +11,7 @@ class InvitationResponse(BaseModel):
     helper_id: str
     created_at: datetime
     updated_at: datetime
+    helpers: Optional[HelperResponse] = None
 
 class InvitationListResponse(BaseModel):
     """Response model for list of invitations"""

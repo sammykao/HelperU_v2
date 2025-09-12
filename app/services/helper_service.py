@@ -35,20 +35,36 @@ class HelperService:
 
     async def search_helpers(self, search_request: HelperSearchRequest) -> HelperListResponse:
         try:
-            count_params = search_request.model_dump(exclude={"limit", "offset"})
+            # Map parameters to match database function signature
+            count_params = {
+                "search_query": search_request.search_query,
+                "search_college": search_request.search_college,
+                "search_graduation_year": search_request.search_graduation_year,
+                "search_zip_code": search_request.search_zip_code,
+            }
 
             count_result = self.admin_client.rpc(
                 "count_helpers_matching_criteria",
                 count_params
             ).execute()
-            total_count = count_result.data[0] if count_result.data else 0
+            total_count = count_result.data if count_result.data else 0
             
             if total_count == 0:
                 return HelperListResponse(helpers=[], total_count=0, limit=search_request.limit, offset=search_request.offset)
             
+            # Map parameters for the get function
+            search_params = {
+                "search_query": search_request.search_query,
+                "search_college": search_request.search_college,
+                "search_graduation_year": search_request.search_graduation_year,
+                "search_zip_code": search_request.search_zip_code,
+                "search_limit": search_request.limit,
+                "search_offset": search_request.offset,
+            }
+            
             result = self.admin_client.rpc(
                 "get_helpers_matching_criteria",
-                search_request.model_dump()
+                search_params
             ).execute()
             
             helpers = [HelperResponse(**helper) for helper in result.data]

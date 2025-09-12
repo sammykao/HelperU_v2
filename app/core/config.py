@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str
     STRIPE_PREMIUM_PRICE_ID: str
     
+    # Frontend Configuration
+    FRONTEND_URL: str = "http://localhost:5173"
+    
     # OpenPhone Configuration
     OPENPHONE_API_KEY: str
     OPENPHONE_FROM_NUMBER: str

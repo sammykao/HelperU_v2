@@ -24,6 +24,7 @@ class ClientProfileData(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     phone: Optional[str] = None
+    email: Optional[str] = None
     pfp_url: Optional[str] = None
     number_of_posts: Optional[int] = 0
     created_at: Optional[datetime] = None

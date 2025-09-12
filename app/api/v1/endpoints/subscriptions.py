@@ -21,7 +21,7 @@ async def get_subscription_status(
     try:
         user_id = current_user.id
         status_info = await stripe_service.get_subscription_status(user_id)
-        return SubscriptionStatus(**status_info)
+        return status_info
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -29,71 +29,39 @@ async def get_subscription_status(
         )
 
 
-@router.post("/create", response_model=CreateSubscriptionResponse)
-async def create_subscription(
+@router.post("/create-checkout-session")
+async def create_checkout_session(
     request: CreateSubscriptionRequest,
     current_user: CurrentUser = Depends(get_current_user),
     stripe_service: StripeService = Depends(get_stripe_service),
     profile_service = Depends(get_profile_service)
 ):
-    """Create a new subscription for the current user"""
+    """Create a Stripe Checkout session for subscription"""
     try:
         user_id = current_user.id
-        email = current_user.email or ""
-        
         # Get user profile data for name
-        profile = await profile_service.get_user_profile_status(user_id)
-        
-        # Extract name from profile or use email as fallback
-        if profile and profile.profile_data:
-            first_name = profile.profile_data.get("first_name", "")
-            last_name = profile.profile_data.get("last_name", "")
-            name = f"{first_name} {last_name}".strip()
-        else:
-            name = email.split("@")[0] if email else "User"
-        
-        # Ensure user has a Stripe customer record
-        if not await stripe_service.get_subscription_status(user_id):
+        profile = await profile_service.get_client_profile(user_id)
+        email = current_user.email or profile.email or ""
+        # Ensure user has a subscription record in the database
+        if not await stripe_service.user_exists_in_subscriptions(user_id):
+            # Extract name from profile or use email as fallback
+            if profile and profile.first_name and profile.last_name:
+                name = f"{profile.first_name} {profile.last_name}".strip()
+            else:
+                name = email.split("@")[0] if email else "User"
             await stripe_service.create_customer(user_id, email, name)
         
-        # Create subscription (price_id is optional, defaults to premium)
-        subscription_data = await stripe_service.create_subscription(
+        # Create checkout session
+        checkout_url = await stripe_service.create_checkout_session(
             user_id, 
             request.price_id
         )
         
-        return CreateSubscriptionResponse(**subscription_data)
+        return {"checkout_url": checkout_url}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create subscription: {str(e)}"
-        )
-
-
-@router.post("/cancel", response_model=CancelSubscriptionResponse)
-async def cancel_subscription(
-    current_user: CurrentUser = Depends(get_current_user),
-    stripe_service: StripeService = Depends(get_stripe_service)
-):
-    """Cancel the current user's subscription"""
-    try:
-        user_id = current_user.id
-        success = await stripe_service.cancel_subscription(user_id)
-        
-        if success:
-            return CancelSubscriptionResponse(
-                success=True,
-                message="Subscription will be canceled at the end of the current period"
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No active subscription found to cancel"
-            )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to cancel subscription: {str(e)}"
+            detail=f"Failed to create checkout session: {str(e)}"
         )
 
 

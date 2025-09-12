@@ -31,14 +31,16 @@ class ApplicationService:
             if task.client_id != user_id:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the owner of this task")
             
-            # Get the applications for the task
+            # Get the applications for the task using embedded relation
             applications_result = self.admin_client.table("applications")\
-                .join("helpers", "helpers.id = applications.helper_id")\
-                .select("applications.*, helpers.*")\
+                .select(
+                    "*",
+                    "helpers:helper_id (*)"
+                )\
                 .eq("task_id", task_id).execute()
 
             if not applications_result.data:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No applications found")
+                return ApplicationListResponse(applications=[], total_count=0)
             
             applications = [
                 ApplicationResponse(
@@ -132,9 +134,13 @@ class ApplicationService:
         try:
             application_result = self.admin_client\
                 .table("applications")\
-                .join("helpers", "helpers.id = applications.helper_id")\
-                .select("applications.*, helpers.*")\
-                .eq("id", application_id).execute()
+                .select(
+                    "*",
+                    "helpers:helper_id (*)"
+                )\
+                .eq("id", application_id)\
+                .single()\
+                .execute()
 
             if not application_result.data:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
@@ -157,10 +163,10 @@ class ApplicationService:
             if task.client_id != user_id:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the owner of this task")
             
-            # Get all invitations for the task
-            invitations_result = self.admin_client.table("invitations").select("*").eq("task_id", task_id).execute()
+            # Get all invitations for the task with helper information
+            invitations_result = self.admin_client.table("invitations").select("*, helpers:helper_id(*)").eq("task_id", task_id).execute()
             if not invitations_result.data:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No invitations found")
+                return InvitationListResponse(invitations=[], total_count=0)
             
             invitations = [InvitationResponse(**invitation) for invitation in invitations_result.data]
             return InvitationListResponse(invitations=invitations, total_count=len(invitations))
