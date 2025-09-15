@@ -13,6 +13,7 @@ from app.schemas.task import (
     TaskSearchListResponse,
     PublicTask,
     PublicTaskResponse,
+    ClientInfo,
 )
 from app.services.stripe_service import StripeService
 
@@ -189,23 +190,6 @@ class TaskService:
         """Search tasks with filters using efficient count and data queries"""
         try:
             # First, get the total count efficiently without pulling all data
-            count_params = search_request.model_dump(exclude={"limit", "offset"})
-
-            count_result = self.admin_client.rpc(
-                "count_tasks_matching_criteria",
-                count_params
-            ).execute()
-            
-            total_count = count_result.data if count_result else 0
-            
-            # If no tasks match criteria, return empty response
-            if total_count == 0:
-                return TaskSearchListResponse(
-                    tasks=[],
-                    total_count=0,
-                    limit=search_request.limit,
-                    offset=search_request.offset,
-                )
             
             result = self.admin_client.rpc(
                 "get_tasks_with_distance",
@@ -215,9 +199,8 @@ class TaskService:
             if not result.data:
                 return TaskSearchListResponse(
                     tasks=[],
-                    total_count=0,
-                    limit=search_request.limit,
-                    offset=search_request.offset,
+                    limit=search_request.search_limit,
+                    offset=search_request.search_offset,
                 )
 
             # Convert to TaskSearchResponse objects
@@ -225,9 +208,8 @@ class TaskService:
 
             return TaskSearchListResponse(
                 tasks=tasks,
-                total_count=total_count,
-                limit=search_request.limit,
-                offset=search_request.offset,
+                limit=search_request.search_limit,
+                offset=search_request.search_offset,
             )
 
         except Exception as e:

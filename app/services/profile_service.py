@@ -189,7 +189,6 @@ class ProfileService:
     async def delete_profile(self, user_id: str):
         try:
             result = self.admin_client.auth.admin.delete_user(user_id)
-            print(result)
         except Exception as exc:
             raise HTTPException(
                 status_code=500, detail=f"Failed to update helper profile: {str(exc)}"

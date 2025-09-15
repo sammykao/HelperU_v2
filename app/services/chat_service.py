@@ -79,7 +79,9 @@ class ChatService:
             for row in result.data:
                 chat_data = {
                     'id': row['id'],
-                    'users': [UUID(p["user_id"]) for p in row.get("participants") or []],
+                    'users': [ 
+                        await self._get_participant_info(p["user_id"]) for p in (row.get("participants") or [])
+                    ],
                     'created_at': row['created_at'],
                     'updated_at': row['updated_at']
                 }
@@ -109,9 +111,8 @@ class ChatService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
-
             row = result.data[0]
-            users = [UUID(p["user_id"]) for p in (row.get("participants") or [])]
+            users = [p["user_id"] for p in (row.get("participants") or [])]
             if user_id not in users:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -121,7 +122,7 @@ class ChatService:
             # Get participant information
             participants = []
             for participant_id in users:
-                participant_info = await self._get_participant_info(str(participant_id))
+                participant_info = await self._get_participant_info(participant_id)
                 participants.append(participant_info)
 
             # Get last message and unread count
@@ -159,7 +160,7 @@ class ChatService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
-            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
+            participant_user_ids = [row["user_id"] for row in cu_result.data]
             if sender_id not in participant_user_ids:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -242,7 +243,7 @@ class ChatService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
-            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
+            participant_user_ids = [row["user_id"] for row in cu_result.data]
             if user_id not in participant_user_ids:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -300,7 +301,7 @@ class ChatService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
-            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
+            participant_user_ids = [row["user_id"] for row in cu_result.data]
             if user_id not in participant_user_ids:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -354,7 +355,7 @@ class ChatService:
             if not result.data:
                 return None
             chat = result.data[0]
-            chat['users'] = [UUID(p["user_id"]) for p in (chat.get("participants") or [])]
+            chat['users'] = [p["user_id"] for p in (chat.get("participants") or [])]
             return ChatResponse(**chat)
 
         except Exception:

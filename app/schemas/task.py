@@ -36,13 +36,13 @@ class TaskResponse(BaseModel):
 
 class TaskSearchRequest(BaseModel):
     """Request model for task search filtering"""
-    search_zip_code: Optional[str] = Field(..., description="Base location for distance calculations")
-    query: Optional[str] = Field(None, description="Text search in title and description")
-    location_type: Optional[str] = Field(None, description="Filter by location type (remote, in-person, etc.)")
+    search_zip_code: str = Field(..., description="Base location for distance calculations")
+    search_query: Optional[str] = Field(None, description="Text search in title and description")
+    search_location_type: Optional[str] = Field(None, description="Filter by location type (remote, in-person, etc.)")
     min_hourly_rate: Optional[float] = Field(None, ge=0, description="Minimum hourly rate filter")
     max_hourly_rate: Optional[float] = Field(None, ge=0, description="Maximum hourly rate filter")
-    limit: int = Field(20, ge=1, le=100, description="Number of tasks to return")
-    offset: int = Field(0, ge=0, description="Number of tasks to skip")
+    search_limit: int = Field(20, ge=1, le=100, description="Number of tasks to return")
+    search_offset: int = Field(0, ge=0, description="Number of tasks to skip")
 
     @validator("max_hourly_rate")
     def validate_hourly_rate_range(cls, v, values):
@@ -55,6 +55,14 @@ class TaskSearchRequest(BaseModel):
             if v <= values["min_hourly_rate"]:
                 raise ValueError("max_hourly_rate must be greater than min_hourly_rate")
         return v
+
+
+class ClientInfo(BaseModel):
+    """Client information for task display"""
+    id: str
+    first_name: str
+    last_name: str
+    pfp_url: Optional[str] = None
 
 
 class TaskSearchResponse(BaseModel):
@@ -76,6 +84,7 @@ class TaskSearchResponse(BaseModel):
     distance: Optional[float] = Field(
         None, description="Distance in miles from search location"
     )
+    client: ClientInfo
 
 
 class TaskUpdate(BaseModel):
@@ -112,7 +121,6 @@ class TaskSearchListResponse(BaseModel):
     """Response model for list of searched tasks with distance"""
 
     tasks: List[TaskSearchResponse]
-    total_count: int
     limit: int
     offset: int
 

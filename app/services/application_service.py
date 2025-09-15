@@ -7,7 +7,7 @@ from app.schemas.applications import (
 )
 from app.schemas.helper import HelperResponse
 from app.schemas.invitations import InvitationResponse, InvitationListResponse
-from app.services.task_service import TaskService
+from app.services.task_service import TaskService, TaskResponse
 from app.services.helper_service import HelperService
 from fastapi import HTTPException, status
 from typing import List
@@ -72,7 +72,9 @@ class ApplicationService:
     async def get_applications_by_helper(self, helper_id: str) -> List[ApplicationResponse]:
         """Get all applications for the tasks of the current helper user"""
         try:
-            applications_result = self.admin_client.table("applications").select("*").eq("helper_id", helper_id).execute()
+
+            # Join statement for tasks and applications
+            applications_result = self.admin_client.table("applications").select("*, tasks:task_id (*)").eq("helper_id", helper_id).execute()
             if not applications_result.data:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No applications found")
             
@@ -80,7 +82,8 @@ class ApplicationService:
             applications = [
                 ApplicationResponse(
                     application=ApplicationInfo(**application), 
-                    helper=helper
+                    helper=helper,
+                    task=TaskResponse(**application["tasks"])
                 )
                 for application in applications_result.data
             ]
@@ -96,8 +99,8 @@ class ApplicationService:
             if not task:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
             
-            helper = self.admin_client.table("helpers").select("*").eq("id", helper_id).execute()
-            if not helper.data:
+            helper = await self.helper_service.get_helper(helper_id)
+            if not helper:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Helper not found")
             
             # Check if the helper has already applied to the task
@@ -105,8 +108,14 @@ class ApplicationService:
             if applications_result.data:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You have already applied to this task")
             
-            # Create the application
-            application = self.admin_client.table("applications").insert(application_create_request.model_dump()).execute()
+            # Create the application with helper_id from authenticated user
+            application_data = {
+                "task_id": application_create_request.task_id,
+                "helper_id": helper_id,
+                "introduction_message": application_create_request.introduction_message,
+                "supplements_url": application_create_request.supplements_url
+            }
+            application = self.admin_client.table("applications").insert(application_data).execute()
             if not application.data:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create application")
             
@@ -114,7 +123,10 @@ class ApplicationService:
             asyncio.create_task(self.update_helper_application_count(helper_id))
             
             # Return the application    
-            return ApplicationResponse(**application.data[0])
+            return ApplicationResponse(
+                application=ApplicationInfo(**application.data[0]),
+                helper=helper
+            )
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
@@ -181,12 +193,15 @@ class ApplicationService:
             if not helper:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Helper not found")
             
-            # Get all invitations for the helper
-            invitations_result = self.admin_client.table("invitations").select("*").eq("helper_id", helper_id).execute()
+            # Get all invitations for the helper, join statement for tasks and invitations
+            invitations_result = self.admin_client.table("invitations").select("*, tasks:task_id (*)").eq("helper_id", helper_id).execute()
             if not invitations_result.data:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No invitations found")
             
-            invitations = [InvitationResponse(**invitation) for invitation in invitations_result.data]
+            invitations = []
+            for invitation in invitations_result.data:
+                invitations.append(InvitationResponse(**invitation, task=TaskResponse(**invitation["tasks"])))
+            
             return InvitationListResponse(invitations=invitations, total_count=len(invitations))
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

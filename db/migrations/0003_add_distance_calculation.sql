@@ -108,7 +108,7 @@ CREATE OR REPLACE FUNCTION public.get_tasks_with_distance(
 RETURNS TABLE(
     id UUID,
     client_id UUID,
-    hourly_rate FLOAT,
+    hourly_rate REAL,
     title TEXT,
     dates JSONB,
     location_type TEXT,
@@ -119,7 +119,8 @@ RETURNS TABLE(
     completed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
-    distance DECIMAL
+    distance DECIMAL,
+    client JSON
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -131,8 +132,8 @@ DECLARE
 BEGIN
     -- Get coordinates for search zip code
     SELECT lat, lng INTO search_lat, search_lng
-    FROM public.zip_codes
-    WHERE zip_code = search_zip_code;
+    FROM public.zip_codes as zc
+    WHERE zc.zip_code = search_zip_code;
     
     -- If zip code not found, return empty result
     IF search_lat IS NULL OR search_lng IS NULL THEN
@@ -159,9 +160,16 @@ BEGIN
             search_lng, 
             zc.lat, 
             zc.lng
-        ) as distance
+        ) as distance,
+        json_build_object(
+            'id', c.id,
+            'first_name', c.first_name,
+            'last_name', c.last_name,
+            'pfp_url', c.pfp_url
+        ) as client
     FROM public.tasks t
     JOIN public.zip_codes zc ON t.zip_code = zc.zip_code
+    JOIN public.clients c ON t.client_id = c.id
     WHERE 
         -- Only return tasks that are not completed (completed_at IS NULL)
         t.completed_at IS NULL
