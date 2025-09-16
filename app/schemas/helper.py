@@ -21,7 +21,7 @@ class HelperResponse(BaseModel):
     college: str
     bio: str
     graduation_year: int
-    zip_code: str
+    zip_code: Optional[str]
     pfp_url: Optional[str] = None
 
     class Config:

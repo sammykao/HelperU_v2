@@ -52,7 +52,9 @@ class ChatService:
                 {"chat_id": chat["id"], "user_id": str(participant_id)}
             ]).execute()
 
-            chat['users'] = [user_id, participant_id]
+            profiles = [user_id, participant_id]
+            
+            chat['users'] = profiles 
             return ChatResponse(**chat)
 
         except HTTPException:
@@ -112,7 +114,9 @@ class ChatService:
 
             row = result.data[0]
             users = [UUID(p["user_id"]) for p in (row.get("participants") or [])]
-            if user_id not in users:
+
+     
+            if UUID(str(user_id)) not in users:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"
@@ -160,7 +164,7 @@ class ChatService:
                     detail="Chat not found"
                 )
             participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
-            if sender_id not in participant_user_ids:
+            if UUID(str(sender_id)) not in participant_user_ids:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"
@@ -243,7 +247,7 @@ class ChatService:
                     detail="Chat not found"
                 )
             participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
-            if user_id not in participant_user_ids:
+            if UUID(str(user_id)) not in participant_user_ids:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"
