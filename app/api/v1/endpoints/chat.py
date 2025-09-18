@@ -1,4 +1,5 @@
 from uuid import UUID
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 
 from app.deps.supabase import get_current_user, get_chat_service
@@ -100,6 +101,54 @@ async def send_message(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to send message: {str(e)}"
+        )
+
+
+@router.get("/with/{participant_id}")
+async def get_chat_with_participant(
+    participant_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    chat_service: ChatService = Depends(get_chat_service)
+):
+    """Check if a direct chat exists between the current user and the participant.
+    Returns { chat_id: string | None } without exposing other details.
+    """
+    try:
+        chat = await chat_service.get_chat_between(current_user.id, participant_id)
+        return { "chat_id": str(chat.id) if chat else None }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to check chat: {str(e)}"
+        )
+
+
+@router.post("/batch-check")
+async def batch_check_chats_with_participants(
+    participant_ids: List[UUID],
+    current_user: CurrentUser = Depends(get_current_user),
+    chat_service: ChatService = Depends(get_chat_service)
+):
+    """Check if direct chats exist between the current user and multiple participants.
+    Returns { participant_id: chat_id | None } for each participant.
+    """
+    try:
+        result = {}
+        for participant_id in participant_ids:
+            try:
+                chat = await chat_service.get_chat_between(current_user.id, participant_id)
+                result[str(participant_id)] = str(chat.id) if chat else None
+            except Exception as e:
+                logger.error(f"Error checking chat with participant {participant_id}: {e}")
+                result[str(participant_id)] = None
+        return result
+    except Exception as e:
+        logger.error(f"Error in batch chat check: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to batch check chats: {str(e)}"
         )
 
 

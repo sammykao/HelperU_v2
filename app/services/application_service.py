@@ -69,14 +69,14 @@ class ApplicationService:
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-    async def get_applications_by_helper(self, helper_id: str) -> List[ApplicationResponse]:
-        """Get all applications for the tasks of the current helper user"""
+    async def get_applications_by_helper(self, helper_id: str) -> ApplicationListResponse:
+        """Get all applications submitted by the current helper user"""
         try:
 
             # Join statement for tasks and applications
             applications_result = self.admin_client.table("applications").select("*, tasks:task_id (*)").eq("helper_id", helper_id).execute()
             if not applications_result.data:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No applications found")
+                return ApplicationListResponse(applications=[], total_count=0)
             
             helper = await self.helper_service.get_helper(helper_id)
             applications = [
@@ -196,7 +196,7 @@ class ApplicationService:
             # Get all invitations for the helper, join statement for tasks and invitations
             invitations_result = self.admin_client.table("invitations").select("*, tasks:task_id (*)").eq("helper_id", helper_id).execute()
             if not invitations_result.data:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No invitations found")
+                return InvitationListResponse(invitations=[], total_count=0)
             
             invitations = []
             for invitation in invitations_result.data:

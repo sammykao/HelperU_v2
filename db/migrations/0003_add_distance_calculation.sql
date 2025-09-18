@@ -95,7 +95,6 @@ BEGIN
 END;
 $$;
 
--- Function to get tasks with distance from a specific zip code (optimized)
 CREATE OR REPLACE FUNCTION public.get_tasks_with_distance(
     search_zip_code TEXT,
     search_query TEXT DEFAULT NULL,
@@ -134,12 +133,7 @@ BEGIN
     SELECT lat, lng INTO search_lat, search_lng
     FROM public.zip_codes as zc
     WHERE zc.zip_code = search_zip_code;
-    
-    -- If zip code not found, return empty result
-    IF search_lat IS NULL OR search_lng IS NULL THEN
-        RETURN;
-    END IF;
-    
+
     RETURN QUERY
     SELECT 
         t.id,
@@ -155,12 +149,12 @@ BEGIN
         t.completed_at,
         t.created_at,
         t.updated_at,
-        public.calculate_distance(
-            search_lat, 
-            search_lng, 
-            zc.lat, 
-            zc.lng
-        ) as distance,
+        CASE 
+            WHEN search_lat IS NOT NULL AND search_lng IS NOT NULL 
+                 AND zc.lat IS NOT NULL AND zc.lng IS NOT NULL
+            THEN public.calculate_distance(search_lat, search_lng, zc.lat, zc.lng)
+            ELSE NULL
+        END AS distance,
         json_build_object(
             'id', c.id,
             'first_name', c.first_name,
@@ -168,23 +162,19 @@ BEGIN
             'pfp_url', c.pfp_url
         ) as client
     FROM public.tasks t
-    JOIN public.zip_codes zc ON t.zip_code = zc.zip_code
+    LEFT JOIN public.zip_codes zc ON t.zip_code = zc.zip_code
     JOIN public.clients c ON t.client_id = c.id
     WHERE 
-        -- Only return tasks that are not completed (completed_at IS NULL)
         t.completed_at IS NULL
-        -- Query filter
         AND (
             search_query IS NULL 
             OR t.title ILIKE '%' || search_query || '%'
             OR t.description ILIKE '%' || search_query || '%'
         )
-        -- Location type filter
         AND (
             search_location_type IS NULL 
             OR t.location_type = search_location_type
         )
-        -- Hourly rate filter
         AND (
             min_hourly_rate IS NULL 
             OR t.hourly_rate >= min_hourly_rate
@@ -194,12 +184,16 @@ BEGIN
             OR t.hourly_rate <= max_hourly_rate
         )
     ORDER BY 
-        -- Sort by distance with NULLs first (for tasks without coordinates)
+        -- Remote tasks first (no zip_code or explicit remote location_type)
+        CASE WHEN t.location_type = 'remote' OR t.zip_code IS NULL THEN 0 ELSE 1 END,
+        -- Among non-remote: tasks with computed distance first
         CASE 
-            WHEN zc.lat IS NULL OR zc.lng IS NULL THEN 0
+            WHEN search_lat IS NOT NULL AND search_lng IS NOT NULL AND zc.lat IS NOT NULL AND zc.lng IS NOT NULL THEN 0
             ELSE 1
         END,
-        distance ASC NULLS FIRST,
+        -- Then nearest first where distance is available
+        distance ASC NULLS LAST,
+        -- Finally newest
         t.created_at DESC
     LIMIT search_limit
     OFFSET search_offset;

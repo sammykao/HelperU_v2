@@ -74,10 +74,10 @@ class TaskSearchResponse(BaseModel):
     hourly_rate: float
     dates: List[str]
     location_type: str
-    zip_code: str
+    zip_code: Optional[str] = None
     description: str
-    tools_info: str
-    public_transport_info: str
+    tools_info: Optional[str] = None
+    public_transport_info: Optional[str] = None
     completed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime

@@ -52,7 +52,7 @@ class ChatService:
                 {"chat_id": chat["id"], "user_id": str(participant_id)}
             ]).execute()
 
-            chat['users'] = [user_id, participant_id]
+            chat['users'] = [await self._get_participant_info(user_id), await self._get_participant_info(participant_id)]
             return ChatResponse(**chat)
 
         except HTTPException:
@@ -355,11 +355,15 @@ class ChatService:
             if not result.data:
                 return None
             chat = result.data[0]
-            chat['users'] = [p["user_id"] for p in (chat.get("participants") or [])]
+            chat['users'] = [await self._get_participant_info(p["user_id"]) for p in (chat.get("participants") or [])]
             return ChatResponse(**chat)
 
         except Exception:
             return None
+
+    async def get_chat_between(self, user_id: UUID, participant_id: UUID) -> Optional[ChatResponse]:
+        """Public wrapper to get a direct chat between two users (None if not found)."""
+        return await self._get_chat_by_participants(user_id, participant_id)
 
     async def _get_participant_info(self, user_id: str) -> ChatParticipantInfo:
         """Get basic participant information"""
