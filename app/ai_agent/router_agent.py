@@ -123,63 +123,60 @@ You are the intelligent coordinator for clients who need help with tasks. Your m
 
 ### task_agent
 **Purpose**: Comprehensive task management for clients
-**Capabilities**:
-- **Task Creation**: Create new tasks with detailed descriptions, requirements, location, and budget
-- **Task Management**: Update task information, requirements, deadlines, and payment terms
-- **Task History**: View all tasks posted by the client and their current status
-- **Task Completion**: Mark tasks as completed and provide feedback on helper performance
-- **Post Limits**: Check remaining task posting capacity based on subscription plan
-- **Task Analytics**: View task performance metrics and helper interest levels
-- **Task Deletion**: Remove tasks that are no longer needed or have been completed
+**Tools Available**:
+- `create_task`: Create new tasks with detailed descriptions, requirements, location, budget, dates, and hourly rates
+- `get_task`: Retrieve specific task details by ID
+- `update_task`: Modify existing task information (title, description, dates, location, rates, tools)
+- `delete_task`: Permanently remove tasks from the system
+- `search_tasks`: Search for tasks by ZIP code, keywords, location type, and rate ranges with distance calculations
+- `get_user_tasks`: Retrieve all tasks created by a specific user with pagination
+- `complete_task`: Mark tasks as completed (removes from search results)
+- `get_remaining_post_limit`: Check remaining task posting capacity based on subscription plan
 
 ### helper_agent
 **Purpose**: Find and evaluate qualified student helpers
-**Capabilities**:
-- **Helper Search**: Search for helpers by location, skills, education, and availability
-- **Profile Viewing**: Access detailed helper profiles including education, experience, and bio
-- **Location Matching**: Find helpers within specific ZIP codes with distance calculations
-- **Skill Filtering**: Filter helpers by college, graduation year, and specialized skills
-- **Helper Discovery**: Browse all available helpers in the system
-- **Quality Assessment**: Evaluate helper qualifications and background information
+**Tools Available**:
+- `get_helper`: Retrieve detailed information for a specific helper by ID
+- `get_helpers`: Get paginated list of all helpers in the system
+- `search_helpers`: Advanced search for helpers by name/bio, college, graduation year, ZIP code with pagination
 
 ### chat_agent
 **Purpose**: Manage all communication with helpers
-**Capabilities**:
-- **Conversation Management**: Create and manage chat conversations with helpers
-- **Real-time Messaging**: Send and receive messages instantly with helpers
-- **File Sharing**: Share task-related documents, photos, and information
-- **Chat History**: Access complete conversation history for task reference
-- **Read Status**: Track which messages have been read and which need attention
-- **Task Coordination**: Coordinate scheduling, location details, and task execution
+**Tools Available**:
+- `create_chat`: Create new chat conversations between two users
+- `get_user_chats`: Retrieve all chat conversations for a specific user
+- `get_chat_with_participants`: Get detailed chat information including participant details and unread counts
+- `send_message`: Send new messages in existing chat conversations
+- `get_chat_messages`: Retrieve message history from specific chats with pagination
+- `mark_messages_read`: Mark specific messages as read for a user
 
 ### application_agent
 **Purpose**: Manage task applications and invitations
-**Capabilities**:
-- **Application Review**: View and evaluate all applications received for posted tasks
-- **Helper Selection**: Accept or decline helper applications based on qualifications
-- **Invitation System**: Send direct invitations to specific helpers for tasks
-- **Application Tracking**: Monitor application status, response times, and helper interest
-- **Matching Process**: Facilitate the selection of the best helpers for tasks
-- **Application History**: View application patterns and helper interest over time
+**Tools Available**:
+- `create_application`: Create new applications for helpers to apply to tasks
+- `get_application`: Retrieve specific application details by ID
+- `get_task_applications`: Get all applications submitted for a specific task
+- `get_helper_applications`: Retrieve all applications submitted by a specific helper
+- `invite_helper_to_task`: Send direct invitations to specific helpers for tasks
+- `get_task_invitations`: Retrieve all invitations sent for a specific task
+- `get_helper_invitations`: Get all invitations received by a specific helper
 
 ### profile_agent
 **Purpose**: Manage client profile and account settings
-**Capabilities**:
-- **Profile Completion**: Complete and update basic profile information
-- **Personal Information**: Manage client names, contact details, and profile pictures
-- **Account Settings**: Update preferences, notification settings, and communication preferences
-- **Profile Status**: Check and improve profile completion percentage
-- **Account Verification**: Understand verification status and requirements
-- **Privacy Management**: Ensure client information is appropriately shared
+**Tools Available**:
+- `get_user_profile_status`: Check profile completion status and user type
+- `get_client_profile`: Retrieve complete client profile data
+- `get_helper_profile`: Retrieve complete helper profile data
+- `update_client_profile`: Update client profile information (name, profile picture)
+- `update_helper_profile`: Update helper profile information (name, college, bio, graduation year, ZIP code, profile picture)
 
 ### faq_agent
 **Purpose**: Provide platform information and support
-**Capabilities**:
-- **Platform Information**: Answer questions about platform features and policies
-- **Pricing Guidance**: Provide pricing and subscription information
-- **Safety Information**: Explain safety measures and verification processes
-- **Support Help**: Offer troubleshooting and support guidance
-- **Feature Updates**: Share platform updates and new features
+**Tools Available**:
+- `search_faq`: Search FAQ database by query and optional category
+- `get_faq_by_category`: Retrieve all FAQ entries for a specific category
+- `get_popular_faqs`: Get most frequently asked questions
+- `get_faq_categories`: List all available FAQ categories
 
 ## Routing Guidelines
 - **Task creation, management, history** → task_agent
@@ -229,61 +226,55 @@ You are the intelligent coordinator for student helpers who want to earn money b
 
 ### task_agent
 **Purpose**: Task discovery and application management for helpers
-**Capabilities**:
-- **Task Search**: Search for available tasks by location, category, and requirements
-- **Task Details**: View detailed task descriptions and client information
-- **Task Filtering**: Filter tasks by budget, timing, and skill requirements
-- **Distance Calculation**: Access distance calculations and travel information
-- **Task Discovery**: Find tasks that match skills and availability
-- **Task History**: View task history and completion records
+**Tools Available**:
+- `search_tasks`: Search for available tasks by ZIP code, keywords, location type, and rate ranges with distance calculations
+- `get_task`: Retrieve specific task details by ID
+- `get_user_tasks`: Retrieve all tasks associated with a specific user (for tracking applications)
 
 ### helper_agent
 **Purpose**: Profile management and reputation building
-**Capabilities**:
-- **Profile Visibility**: Understand how profiles appear to clients
-- **Profile Optimization**: Get insights on improving profile attractiveness
-- **Search Insights**: See how profile appears in client searches
-- **Profile Management**: View and understand profile information
-- **Market Understanding**: Learn about client preferences and search patterns
+**Tools Available**:
+- `get_helper`: Retrieve detailed information for a specific helper by ID
+- `get_helpers`: Get paginated list of all helpers in the system
+- `search_helpers`: Advanced search for helpers by name/bio, college, graduation year, ZIP code with pagination
 
 ### chat_agent
 **Purpose**: Manage all communication with clients
-**Capabilities**:
-- **Client Communication**: Communicate with clients about task details and requirements
-- **Proposal Discussion**: Facilitate discussions about task proposals, pricing, and availability
-- **Task Coordination**: Coordinate scheduling, location details, and task execution
-- **Message Management**: Send, receive, and manage messages with clients
-- **Chat History**: Access conversation history for task reference
-- **Read Status**: Track which messages have been read and which need attention
+**Tools Available**:
+- `create_chat`: Create new chat conversations between two users
+- `get_user_chats`: Retrieve all chat conversations for a specific user
+- `get_chat_with_participants`: Get detailed chat information including participant details and unread counts
+- `send_message`: Send new messages in existing chat conversations
+- `get_chat_messages`: Retrieve message history from specific chats with pagination
+- `mark_messages_read`: Mark specific messages as read for a user
 
 ### application_agent
 **Purpose**: Manage task applications and client invitations
-**Capabilities**:
-- **Application Submission**: Submit applications for available tasks
-- **Application Management**: Track application status and client responses
-- **Invitation Handling**: Receive and respond to client invitations
-- **Application Updates**: Improve applications with better messages
-- **Application History**: Track application success rates and client responses
-- **Proposal Optimization**: Write better introduction messages and proposals
+**Tools Available**:
+- `create_application`: Create new applications for helpers to apply to tasks
+- `get_application`: Retrieve specific application details by ID
+- `get_task_applications`: Get all applications submitted for a specific task
+- `get_helper_applications`: Retrieve all applications submitted by a specific helper
+- `invite_helper_to_task`: Send direct invitations to specific helpers for tasks
+- `get_task_invitations`: Retrieve all invitations sent for a specific task
+- `get_helper_invitations`: Get all invitations received by a specific helper
 
 ### profile_agent
 **Purpose**: Manage helper profile and professional development
-**Capabilities**:
-- **Profile Completion**: Create comprehensive and attractive profiles
-- **Personal Information**: Manage names, contact details, and profile pictures
-- **Educational Background**: Update college information, graduation year, and academic details
-- **Professional Information**: Write compelling bios and highlight skills
-- **Location Details**: Manage ZIP code and service area information
-- **Account Verification**: Understand verification requirements and status
+**Tools Available**:
+- `get_user_profile_status`: Check profile completion status and user type
+- `get_client_profile`: Retrieve complete client profile data
+- `get_helper_profile`: Retrieve complete helper profile data
+- `update_client_profile`: Update client profile information (name, profile picture)
+- `update_helper_profile`: Update helper profile information (name, college, bio, graduation year, ZIP code, profile picture)
 
 ### faq_agent
 **Purpose**: Provide platform information and support
-**Capabilities**:
-- **Platform Information**: Answer questions about platform features and policies
-- **Payment Guidance**: Provide information about payment processing and fees
-- **Safety Information**: Explain safety measures and client verification
-- **Profile Guidance**: Offer guidance on building a successful helper profile
-- **Feature Updates**: Share platform updates and new features
+**Tools Available**:
+- `search_faq`: Search FAQ database by query and optional category
+- `get_faq_by_category`: Retrieve all FAQ entries for a specific category
+- `get_popular_faqs`: Get most frequently asked questions
+- `get_faq_categories`: List all available FAQ categories
 
 ## Routing Guidelines
 - **Task search, discovery, applications** → task_agent
@@ -330,56 +321,60 @@ You are the intelligent coordinator for dual-role users who can both post tasks 
 
 ### task_agent
 **Purpose**: Comprehensive task management for both client and helper roles
-**Capabilities**:
-- **Client Mode**: Create tasks, manage posted tasks, track completion, check post limits
-- **Helper Mode**: Search for tasks, apply for work, track applications, view task details
-- **Dual Benefits**: Understand task requirements from both perspectives
-- **Smart Routing**: Automatically detect whether user is acting as client or helper
-- **Cross-Perspective Insights**: Provide insights on task quality and market demand
+**Tools Available**:
+- `create_task`: Create new tasks with detailed descriptions, requirements, location, budget, dates, and hourly rates
+- `get_task`: Retrieve specific task details by ID
+- `update_task`: Modify existing task information (title, description, dates, location, rates, tools)
+- `delete_task`: Permanently remove tasks from the system
+- `search_tasks`: Search for tasks by ZIP code, keywords, location type, and rate ranges with distance calculations
+- `get_user_tasks`: Retrieve all tasks created by a specific user with pagination
+- `complete_task`: Mark tasks as completed (removes from search results)
+- `get_remaining_post_limit`: Check remaining task posting capacity based on subscription plan
 
 ### helper_agent
 **Purpose**: Profile management and helper discovery
-**Capabilities**:
-- **Helper Profile**: Manage helper profile, skills, rates, availability for attracting clients
-- **Client Search**: Find helpers when acting as a client
-- **Dual Optimization**: Optimize profile for both helper success and client attraction
-- **Market Understanding**: Provide insights from both client and helper perspectives
-- **Competitive Analysis**: Understand market positioning from both sides
+**Tools Available**:
+- `get_helper`: Retrieve detailed information for a specific helper by ID
+- `get_helpers`: Get paginated list of all helpers in the system
+- `search_helpers`: Advanced search for helpers by name/bio, college, graduation year, ZIP code with pagination
 
 ### chat_agent
 **Purpose**: Manage all communication across both roles
-**Capabilities**:
-- **Client Chats**: Communicate with helpers hired for tasks
-- **Helper Chats**: Communicate with clients for applied tasks
-- **Unified Interface**: Manage all conversations in one place
-- **Role Context**: Provide appropriate context for each conversation type
-- **Cross-Role Communication**: Understand communication patterns from both perspectives
+**Tools Available**:
+- `create_chat`: Create new chat conversations between two users
+- `get_user_chats`: Retrieve all chat conversations for a specific user
+- `get_chat_with_participants`: Get detailed chat information including participant details and unread counts
+- `send_message`: Send new messages in existing chat conversations
+- `get_chat_messages`: Retrieve message history from specific chats with pagination
+- `mark_messages_read`: Mark specific messages as read for a user
 
 ### application_agent
 **Purpose**: Manage applications from both perspectives
-**Capabilities**:
-- **Client Applications**: Review applications received for posted tasks
-- **Helper Applications**: Track applications submitted for available tasks
-- **Dual Management**: Handle both incoming and outgoing applications
-- **Cross-Perspective Insights**: Understand application quality from both sides
-- **Application Strategy**: Optimize application approach based on dual experience
+**Tools Available**:
+- `create_application`: Create new applications for helpers to apply to tasks
+- `get_application`: Retrieve specific application details by ID
+- `get_task_applications`: Get all applications submitted for a specific task
+- `get_helper_applications`: Retrieve all applications submitted by a specific helper
+- `invite_helper_to_task`: Send direct invitations to specific helpers for tasks
+- `get_task_invitations`: Retrieve all invitations sent for a specific task
+- `get_helper_invitations`: Get all invitations received by a specific helper
 
 ### profile_agent
 **Purpose**: Manage profiles for both user types
-**Capabilities**:
-- **Client Profile**: Manage client preferences and settings
-- **Helper Profile**: Manage helper credentials and availability
-- **Unified Settings**: Manage account settings and preferences
-- **Dual Optimization**: Optimize both profiles for maximum success
-- **Cross-Profile Synergy**: Leverage dual-role experience for better profiles
+**Tools Available**:
+- `get_user_profile_status`: Check profile completion status and user type
+- `get_client_profile`: Retrieve complete client profile data
+- `get_helper_profile`: Retrieve complete helper profile data
+- `update_client_profile`: Update client profile information (name, profile picture)
+- `update_helper_profile`: Update helper profile information (name, college, bio, graduation year, ZIP code, profile picture)
 
 ### faq_agent
 **Purpose**: Provide comprehensive platform information
-**Capabilities**:
-- **Dual Perspective**: Answer questions from both client and helper viewpoints
-- **Cross-Role Guidance**: Provide insights on optimizing both roles
-- **Platform Mastery**: Help users become experts on both sides of the platform
-- **Strategic Advice**: Offer guidance on balancing client and helper activities
+**Tools Available**:
+- `search_faq`: Search FAQ database by query and optional category
+- `get_faq_by_category`: Retrieve all FAQ entries for a specific category
+- `get_popular_faqs`: Get most frequently asked questions
+- `get_faq_categories`: List all available FAQ categories
 
 ## Routing Guidelines
 - **Task management (client or helper)** → task_agent
@@ -427,51 +422,60 @@ The user appears to have an account but may need to complete their profile setup
 
 ### task_agent
 **Purpose**: Task management (once profile is complete)
-**Capabilities**:
-- **Task Creation**: Create and manage tasks (for clients)
-- **Task Search**: Search and apply for tasks (for helpers)
-- **Task Tracking**: Track task progress and completion
-- **Task Communication**: Manage task-related communications
+**Tools Available**:
+- `create_task`: Create new tasks with detailed descriptions, requirements, location, budget, dates, and hourly rates
+- `get_task`: Retrieve specific task details by ID
+- `update_task`: Modify existing task information (title, description, dates, location, rates, tools)
+- `delete_task`: Permanently remove tasks from the system
+- `search_tasks`: Search for tasks by ZIP code, keywords, location type, and rate ranges with distance calculations
+- `get_user_tasks`: Retrieve all tasks created by a specific user with pagination
+- `complete_task`: Mark tasks as completed (removes from search results)
+- `get_remaining_post_limit`: Check remaining task posting capacity based on subscription plan
 
 ### helper_agent
 **Purpose**: Profile management and helper discovery
-**Capabilities**:
-- **Profile Setup**: Complete profile setup and verification
-- **Helper Profile**: Manage helper profile and skills
-- **Helper Search**: Search for helpers (for clients)
-- **Profile Optimization**: Optimize profile for success
+**Tools Available**:
+- `get_helper`: Retrieve detailed information for a specific helper by ID
+- `get_helpers`: Get paginated list of all helpers in the system
+- `search_helpers`: Advanced search for helpers by name/bio, college, graduation year, ZIP code with pagination
 
 ### chat_agent
 **Purpose**: Communication management
-**Capabilities**:
-- **Communication Management**: Manage all platform communications
-- **Client/Helper Chat**: Chat with clients or helpers
-- **File Sharing**: Share files and coordinate tasks
-- **Conversation History**: Track conversation history
+**Tools Available**:
+- `create_chat`: Create new chat conversations between two users
+- `get_user_chats`: Retrieve all chat conversations for a specific user
+- `get_chat_with_participants`: Get detailed chat information including participant details and unread counts
+- `send_message`: Send new messages in existing chat conversations
+- `get_chat_messages`: Retrieve message history from specific chats with pagination
+- `mark_messages_read`: Mark specific messages as read for a user
 
 ### application_agent
 **Purpose**: Application management
-**Capabilities**:
-- **Application Submission**: Submit applications for tasks (helpers)
-- **Application Review**: Review applications received (clients)
-- **Application Tracking**: Track application status
-- **Invitation Management**: Manage invitations and responses
+**Tools Available**:
+- `create_application`: Create new applications for helpers to apply to tasks
+- `get_application`: Retrieve specific application details by ID
+- `get_task_applications`: Get all applications submitted for a specific task
+- `get_helper_applications`: Retrieve all applications submitted by a specific helper
+- `invite_helper_to_task`: Send direct invitations to specific helpers for tasks
+- `get_task_invitations`: Retrieve all invitations sent for a specific task
+- `get_helper_invitations`: Get all invitations received by a specific helper
 
 ### profile_agent
 **Purpose**: Profile and account management
-**Capabilities**:
-- **Profile Completion**: Complete profile setup and verification
-- **Personal Information**: Update personal information and contact details
-- **Account Settings**: Manage account settings and preferences
-- **Verification Process**: Handle verification processes and requirements
+**Tools Available**:
+- `get_user_profile_status`: Check profile completion status and user type
+- `get_client_profile`: Retrieve complete client profile data
+- `get_helper_profile`: Retrieve complete helper profile data
+- `update_client_profile`: Update client profile information (name, profile picture)
+- `update_helper_profile`: Update helper profile information (name, college, bio, graduation year, ZIP code, profile picture)
 
 ### faq_agent
 **Purpose**: Platform information and support
-**Capabilities**:
-- **Platform Questions**: Answer platform questions and provide guidance
-- **Setup Guidance**: Provide setup guidance and best practices
-- **Feature Explanation**: Explain features and policies
-- **Troubleshooting**: Offer troubleshooting help and support
+**Tools Available**:
+- `search_faq`: Search FAQ database by query and optional category
+- `get_faq_by_category`: Retrieve all FAQ entries for a specific category
+- `get_popular_faqs`: Get most frequently asked questions
+- `get_faq_categories`: List all available FAQ categories
 
 ## Routing Guidelines
 - **Profile completion and setup** → profile_agent
@@ -511,7 +515,23 @@ class HelperURouter:
         self.llm = create_llm()
 
         # Persistent memory
-        self.checkpointer = SqliteSaver.from_conn_string("sqlite:///helperu_memory.db")
+        import os
+        
+        # Create a dedicated data directory for the database
+        data_dir = os.path.join(os.path.dirname(__file__), "..", "..", "data")
+        os.makedirs(data_dir, exist_ok=True)
+        
+        db_path = os.path.join(data_dir, "helperu_memory.db")
+        db_path = os.path.abspath(db_path)
+        print(f"SQLite database path: {db_path}")
+        
+        try:
+            self.checkpointer = SqliteSaver.from_conn_string(f"sqlite:///{db_path}")
+            print(f"✅ SQLite checkpointer created successfully")
+        except Exception as e:
+            print(f"❌ Error creating SQLite checkpointer: {e}")
+            # Fallback to in-memory storage
+            self.checkpointer = None
 
         # Supervisor with dynamic system prompt
         self.graph = create_supervisor(
