@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     STRIPE_PREMIUM_PRICE_ID: str
     
     # Frontend Configuration
-    FRONTEND_URL: str = "http://localhost:5173"
+    FRONTEND_URL: str
     
     # OpenPhone Configuration
     OPENPHONE_API_KEY: str
