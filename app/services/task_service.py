@@ -21,6 +21,8 @@ from app.services.stripe_service import StripeService
 class TaskService:
     """Service for handling task operations and business logic"""
 
+    ENUM_LOCATION_TYPE = ["remote", "in-person"]
+
     def __init__(self, admin_client: Client, stripe_service: StripeService):
         self.admin_client = admin_client
         self.stripe_service = stripe_service
@@ -28,8 +30,7 @@ class TaskService:
     async def create_task(self, client_id: str, request: TaskCreate) -> TaskResponse:
         """Create a new task with validation"""
         try:
-            # Check if user is a client
-
+            # Check if user is a client            
             client = self.admin_client.table("clients").select("*").eq("id", client_id).execute()
             if not client.data:
                 raise HTTPException(status_code=404, detail="Client not found")
@@ -45,7 +46,9 @@ class TaskService:
             task_payload["client_id"] = client_id
 
             # Create the task
-
+            if request.location_type not in self.ENUM_LOCATION_TYPE:
+                raise HTTPException(status_code=400, detail="Invalid location type, location type must be one of the following: " + ", ".join(self.ENUM_LOCATION_TYPE))
+            
             result = self.admin_client.table("tasks").insert(task_payload).execute()
 
             if not result.data:

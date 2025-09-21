@@ -9,6 +9,7 @@ and return serializable JSON responses.
 from typing import Optional, List
 from fastapi import HTTPException
 from app.deps.supabase import get_task_service, get_stripe_service
+from datetime import datetime
 
 from app.schemas.task import (
     TaskCreate,
@@ -30,6 +31,13 @@ stripe_service = get_stripe_service()
 # The arguments are inferred from the function arguments.
 # The function must be a coroutine function.
 # The function must return a value that can be serialized to JSON.
+
+
+@tool
+async def get_todays_date() -> str:
+    """Get the current date and the day of the week as a tuple (YYYY-MM-DD, DayName)."""
+    return datetime.now().strftime("%Y-%m-%d"), datetime.now().strftime("%A")
+
 
 @tool
 async def create_task(client_id: str, 
@@ -60,8 +68,7 @@ async def create_task(client_id: str,
                             completed. Format should be ISO 8601 (YYYY-MM-DD).
                             Multiple dates indicate flexibility in scheduling.
         location_type (str): The type of location where the task will be
-                            performed. Options include: 'remote', 'on_site',
-                            'hybrid', or other location-specific categories.
+                            performed. Options only include: 'remote', 'in-person'.
         zip_code (Optional[str]): The ZIP code where the task will be performed.
                                     Required for on-site tasks, optional for remote.
                                     Must be a valid US ZIP code format.
@@ -79,11 +86,20 @@ async def create_task(client_id: str,
     
     Returns:
         TaskResponse: A complete task object containing all the created task
-                        details including the generated UUID, timestamps, and
-                        formatted data. The response includes id, client_id,
-                        hourly_rate, title, dates (as JSONB), location_type,
-                        zip_code, description, tools_info, public_transport_info,
-                        completed_at (null for new tasks), created_at, and updated_at.
+                        details. Fields include:
+                        - id (str): Unique task identifier
+                        - client_id (str): ID of the client who created the task
+                        - title (str): Task title
+                        - hourly_rate (float): Hourly rate in dollars
+                        - dates (List[str]): List of dates in YYYY-MM-DD format
+                        - location_type (str): Type of location (remote, in-person, etc.)
+                        - zip_code (Optional[str]): ZIP code for the task
+                        - description (str): Detailed task description
+                        - tools_info (Optional[str]): Information about required tools
+                        - public_transport_info (Optional[str]): Public transportation information
+                        - completed_at (Optional[datetime]): Completion timestamp (null for new tasks)
+                        - created_at (datetime): Task creation timestamp
+                        - updated_at (datetime): Last update timestamp
     
     Raises:
         HTTPException: Returns a 500 status code with error details if the
@@ -134,11 +150,20 @@ async def get_task(task_id: str) -> TaskResponse:
                         Must be a valid UUID string that exists in the system.
     
     Returns:
-        TaskResponse: A complete task object containing all task details
-                        including id, client_id, hourly_rate, title, dates,
-                        location_type, zip_code, description, tools_info,
-                        public_transport_info, completed_at, created_at, and updated_at.
-                        If the task is completed, completed_at will contain a timestamp.
+        TaskResponse: A complete task object containing all task details. Fields include:
+                        - id (str): Unique task identifier
+                        - client_id (str): ID of the client who created the task
+                        - title (str): Task title
+                        - hourly_rate (float): Hourly rate in dollars
+                        - dates (List[str]): List of dates in YYYY-MM-DD format
+                        - location_type (str): Type of location (remote, in-person, etc.)
+                        - zip_code (Optional[str]): ZIP code for the task
+                        - description (str): Detailed task description
+                        - tools_info (Optional[str]): Information about required tools
+                        - public_transport_info (Optional[str]): Public transportation information
+                        - completed_at (Optional[datetime]): Completion timestamp (null if not completed)
+                        - created_at (datetime): Task creation timestamp
+                        - updated_at (datetime): Last update timestamp
     
     Raises:
         HTTPException: Returns a 404 status code if the task_id doesn't exist
@@ -208,11 +233,20 @@ async def update_task(
                                                 Useful if the location has changed.
     
     Returns:
-        TaskResponse: The updated task object containing all current task details
-                        including the modified fields and updated timestamps.
-                        The response includes id, client_id, hourly_rate, title,
-                        dates, location_type, zip_code, description, tools_info,
-                        public_transport_info, completed_at, created_at, and updated_at.
+        TaskResponse: The updated task object containing all current task details. Fields include:
+                        - id (str): Unique task identifier
+                        - client_id (str): ID of the client who created the task
+                        - title (str): Task title
+                        - hourly_rate (float): Hourly rate in dollars
+                        - dates (List[str]): List of dates in YYYY-MM-DD format
+                        - location_type (str): Type of location (remote, in-person, etc.)
+                        - zip_code (Optional[str]): ZIP code for the task
+                        - description (str): Detailed task description
+                        - tools_info (Optional[str]): Information about required tools
+                        - public_transport_info (Optional[str]): Public transportation information
+                        - completed_at (Optional[datetime]): Completion timestamp (null if not completed)
+                        - created_at (datetime): Task creation timestamp
+                        - updated_at (datetime): Last update timestamp
     
     Raises:
         HTTPException: Returns a 404 status code if the task_id doesn't exist,
@@ -337,11 +371,27 @@ async def search_tasks(
                         the first 40, etc.
     
     Returns:
-        TaskSearchResponse: A structured response containing the search results
-                            including a list of matching tasks with distance
-                            calculations (if zip_code provided), total count,
-                            and pagination information. Each task includes all
-                            standard fields plus a distance field in miles.
+        TaskSearchListResponse: A structured response containing the search results. Fields include:
+                            - tasks (List[TaskSearchResponse]): List of matching tasks with distance calculations
+                            - limit (int): Number of tasks returned
+                            - offset (int): Number of tasks skipped
+                            
+                            Each TaskSearchResponse includes:
+                            - id (str): Unique task identifier
+                            - client_id (str): ID of the client who created the task
+                            - title (str): Task title
+                            - hourly_rate (float): Hourly rate in dollars
+                            - dates (List[str]): List of dates in YYYY-MM-DD format
+                            - location_type (str): Type of location (remote, in-person, etc.)
+                            - zip_code (Optional[str]): ZIP code for the task
+                            - description (str): Detailed task description
+                            - tools_info (Optional[str]): Information about required tools
+                            - public_transport_info (Optional[str]): Public transportation information
+                            - completed_at (Optional[datetime]): Completion timestamp (null if not completed)
+                            - created_at (datetime): Task creation timestamp
+                            - updated_at (datetime): Last update timestamp
+                            - distance (Optional[float]): Distance in miles from search location
+                            - client (ClientInfo): Client information including id, first_name, last_name, pfp_url
     
     Raises:
         HTTPException: Returns a 404 status code if no tasks match the criteria,
@@ -365,12 +415,12 @@ async def search_tasks(
     try:
         request = TaskSearchRequest(
             search_zip_code=search_zip_code,
-            query=query,
-            location_type=location_type,
+            search_query=query,
+            search_location_type=location_type,
             min_hourly_rate=min_hourly_rate,
             max_hourly_rate=max_hourly_rate,
-            limit=limit,
-            offset=offset
+            search_limit=limit,
+            search_offset=offset
         )
         result = await task_service.search_tasks(request)
         if not result:
@@ -406,12 +456,26 @@ async def get_user_tasks(
                         the first 40, etc.
     
     Returns:
-        TaskListResponse: A structured response containing a list of tasks
-                            associated with the specified user, including both
-                            open and completed tasks. Each task includes all
-                            standard fields: id, client_id, hourly_rate, title,
-                            dates, location_type, zip_code, description, tools_info,
-                            public_transport_info, completed_at, created_at, and updated_at.
+        TaskListResponse: A structured response containing a list of tasks. Fields include:
+                            - tasks (List[TaskResponse]): List of tasks associated with the user
+                            - total_count (int): Total number of tasks for the user
+                            - limit (int): Number of tasks returned
+                            - offset (int): Number of tasks skipped
+                            
+                            Each TaskResponse includes:
+                            - id (str): Unique task identifier
+                            - client_id (str): ID of the client who created the task
+                            - title (str): Task title
+                            - hourly_rate (float): Hourly rate in dollars
+                            - dates (List[str]): List of dates in YYYY-MM-DD format
+                            - location_type (str): Type of location (remote, in-person, etc.)
+                            - zip_code (Optional[str]): ZIP code for the task
+                            - description (str): Detailed task description
+                            - tools_info (Optional[str]): Information about required tools
+                            - public_transport_info (Optional[str]): Public transportation information
+                            - completed_at (Optional[datetime]): Completion timestamp (null if not completed)
+                            - created_at (datetime): Task creation timestamp
+                            - updated_at (datetime): Last update timestamp
     
     Raises:
         HTTPException: Returns a 404 status code if no tasks are found for

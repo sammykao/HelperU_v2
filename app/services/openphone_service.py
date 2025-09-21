@@ -73,8 +73,8 @@ class OpenPhoneService:
                 timeout=30
             )
             
-            if response.status_code == 200:
-                result = response.json()
+            if response.status_code in [200, 201, 202]:
+                result = response.json().get("data")
                 logger.info(f"SMS sent successfully to {len(formatted_numbers)} recipients")
                 return OpenPhoneMessageResponse(
                     message_id=result.get("id"),
@@ -175,8 +175,6 @@ Your application is being reviewed. You'll be notified of the final decision soo
         content = f"""💬 New Message from {notification.sender_name}
 
 "{notification.message_preview[:50]}{'...' if len(notification.message_preview) > 50 else ''}"
-
-Chat ID: {notification.chat_id[:8]}...
 
 Reply in the HelperU app to continue the conversation."""
 

@@ -42,10 +42,12 @@ async def get_user_profile_status(user_id: str) -> UserProfileStatusResponse:
         
         Returns:
             UserProfileStatusResponse: A structured response containing the user's
-                                      profile completion status including 
-                                      the user type (client or helper) 
-                                      and the profile data. The response helps identify
-                                      what profile type the user is and what data is available.
+                                      profile completion status. Fields include:
+                                      - user_type (str): Type of user ("client" or "helper")
+                                      - profile_completed (bool): Whether the profile is complete
+                                      - email_verified (bool): Whether email is verified
+                                      - phone_verified (bool): Whether phone is verified
+                                      - profile_data (Optional[dict]): Profile data (ClientProfileData or HelperProfileData)
         
         Raises:
             HTTPException: Returns a 500 status code with error details if the
@@ -85,12 +87,16 @@ async def get_client_profile(user_id: str) -> ClientProfileData:
         
         Returns:
             ClientProfileData: A complete client profile object containing all
-                              client-specific information including personal details,
-                              preferences, and account settings. The response
-                              typically includes fields such as first_name,
-                              last_name, email, phone, pfp_url, and any other
-                              client-specific profile fields that have been
-                              configured in the system.
+                              client-specific information. Fields include:
+                              - id (str): Unique client identifier
+                              - first_name (Optional[str]): Client's first name
+                              - last_name (Optional[str]): Client's last name
+                              - phone (Optional[str]): Client's phone number
+                              - email (Optional[str]): Client's email address
+                              - pfp_url (Optional[str]): Profile picture URL
+                              - number_of_posts (Optional[int]): Number of tasks posted
+                              - created_at (Optional[datetime]): Account creation timestamp
+                              - updated_at (Optional[datetime]): Last update timestamp
         
         Raises:
             HTTPException: Returns a 500 status code with error details if the
@@ -133,13 +139,20 @@ async def get_helper_profile(user_id: str) -> HelperProfileData:
         
         Returns:
             HelperProfileData: A complete helper profile object containing all
-                              helper-specific information including personal details,
-                              educational background, skills, location, and
-                              professional information. The response typically
-                              includes fields such as first_name, last_name,
-                              email, phone, college, bio, graduation_year,
-                              zip_code, pfp_url, and any other helper-specific
-                              profile fields that have been configured in the system.
+                              helper-specific information. Fields include:
+                              - id (str): Unique helper identifier
+                              - first_name (Optional[str]): Helper's first name
+                              - last_name (Optional[str]): Helper's last name
+                              - email (Optional[str]): Helper's email address
+                              - phone (Optional[str]): Helper's phone number
+                              - college (Optional[str]): Name of the college/university
+                              - bio (Optional[str]): Helper's biography/description
+                              - graduation_year (Optional[int]): Year of graduation
+                              - zip_code (Optional[str]): ZIP code for location
+                              - pfp_url (Optional[str]): Profile picture URL
+                              - number_of_applications (Optional[int]): Number of applications submitted
+                              - created_at (Optional[datetime]): Account creation timestamp
+                              - updated_at (Optional[datetime]): Last update timestamp
         
         Raises:
             HTTPException: Returns a 500 status code with error details if the
@@ -203,11 +216,10 @@ async def update_client_profile(user_id: str,
         
         Returns:
             ProfileUpdateResponse: A response object confirming the profile update
-                                  was successful, including the updated profile
-                                  data and any relevant metadata. The response
-                                  typically includes the updated profile fields,
-                                  timestamp of the update, and confirmation of
-                                  the changes made to the profile.
+                                  was successful. Fields include:
+                                  - success (bool): Whether the update was successful
+                                  - message (str): Description of the operation
+                                  - profile_data (Optional[dict]): Updated profile data
         
         Raises:
             HTTPException: Returns a 404 status code if the user_id doesn't exist,
@@ -307,11 +319,10 @@ async def update_helper_profile(user_id: str,
         
         Returns:
             ProfileUpdateResponse: A response object confirming the profile update
-                                  was successful, including the updated profile
-                                  data and any relevant metadata. The response
-                                  typically includes the updated profile fields,
-                                  timestamp of the update, and confirmation of
-                                  the changes made to the profile.
+                                  was successful. Fields include:
+                                  - success (bool): Whether the update was successful
+                                  - message (str): Description of the operation
+                                  - profile_data (Optional[dict]): Updated profile data
         
         Raises:
             HTTPException: Returns a 404 status code if the user_id doesn't exist,

@@ -1,5 +1,5 @@
 from langgraph_supervisor import create_supervisor
-from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from app.ai_agent.config import create_llm
 from app.deps.supabase import get_profile_service
 from app.schemas.auth import CurrentUser
@@ -12,7 +12,8 @@ from app.ai_agent.agents.application_agent import ApplicationAgent
 from app.ai_agent.agents.faq_agent import FAQAgent
 from fastapi import HTTPException, status
 from typing import Optional
-
+import aiosqlite
+import os
 async def build_system_prompt(state) -> str:
     """Generate dynamic system prompt based on user context in state."""
     user = state.get("current_user")
@@ -514,27 +515,28 @@ class HelperURouter:
         # Shared LLM
         self.llm = create_llm()
 
-        # Persistent memory
-        import os
         
         # Create a dedicated data directory for the database
         data_dir = os.path.join(os.path.dirname(__file__), "..", "..", "data")
         os.makedirs(data_dir, exist_ok=True)
         
-        db_path = os.path.join(data_dir, "helperu_memory.db")
+        db_path = os.path.join(data_dir, "checkpoints.sqlite")
         db_path = os.path.abspath(db_path)
         print(f"SQLite database path: {db_path}")
         
         try:
-            self.checkpointer = SqliteSaver.from_conn_string(f"sqlite:///{db_path}")
-            print(f"✅ SQLite checkpointer created successfully")
+            # Create AsyncSqliteSaver following the same pattern as SqliteSaver
+            # Note: We'll use aiosqlite.connect for async connection
+            conn = aiosqlite.connect(db_path)
+            self.checkpointer = AsyncSqliteSaver(conn)
+            print(f"✅ AsyncSqliteSaver created successfully")
         except Exception as e:
-            print(f"❌ Error creating SQLite checkpointer: {e}")
+            print(f"❌ Error creating AsyncSqliteSaver: {e}")
             # Fallback to in-memory storage
             self.checkpointer = None
 
         # Supervisor with dynamic system prompt
-        self.graph = create_supervisor(
+        supervisor_graph = create_supervisor(
             model=self.llm,
             agents=[
                 self.task_agent.graph,
@@ -544,9 +546,16 @@ class HelperURouter:
                 self.application_agent.graph,
                 self.faq_agent.graph,
             ],
-            state_modifier=build_system_prompt, 
-            checkpointer=self.checkpointer
-        ).compile()
+            state_modifier=build_system_prompt,
+        )
+        
+        # Compile the graph with checkpointer
+        if self.checkpointer:
+            self.graph = supervisor_graph.compile(checkpointer=self.checkpointer)
+            print(f"✅ Graph compiled with AsyncSqliteSaver")
+        else:
+            self.graph = supervisor_graph.compile()
+            print(f"⚠️ Graph compiled without checkpointer (fallback mode)")
 
     async def run(self, message: str, current_user: Optional[CurrentUser], thread_id: str):
         """Run supervisor with dynamic user context embedded in state."""
@@ -562,9 +571,21 @@ class HelperURouter:
             "current_user": current_user if current_user else None,
             "user_type": user_type if user_type else "unknown",
         }
+        
+        # Use the configuration format from the example
         config = {"configurable": {"thread_id": thread_id}}
+        
         try:
+            
             result = await self.graph.ainvoke(state, config)
+            
+            # Check state after invoking
+            try:
+                final_state = self.graph.get_state(config)
+                print(f"Final state after invoke: {final_state}")
+            except Exception as e:
+                print(f"⚠️ Could not get final state: {e}")
+                final_state = None
             # Extract a user-friendly response payload matching AIResponse
             messages = result.get("messages", []) if isinstance(result, dict) else []
             response_text = ""
@@ -589,7 +610,6 @@ class HelperURouter:
                             agent_used = name or agent_used
                             break
             
-            print(agent_used)
             if not response_text:
                 response_text = ""
 

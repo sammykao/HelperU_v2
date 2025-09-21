@@ -291,11 +291,14 @@ class ChatService:
     async def mark_messages_read(self, chat_id: UUID, user_id: UUID, request: ChatMarkReadRequest) -> dict:
         """Mark messages as read"""
         try:
+
+            print(chat_id, user_id, request)
             # Verify user is participant in chat via chat_users
             cu_result = (self.admin_client.table("chat_users")
                 .select("id,user_id")
-                .eq("chat_id", str(chat_id))
+                .eq("chat_id", chat_id)
                 .execute())
+            print(cu_result)
             if not cu_result.data:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,

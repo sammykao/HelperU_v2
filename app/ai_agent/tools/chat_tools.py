@@ -46,11 +46,18 @@ async def create_chat(user_id: str, participant_id: str) -> ChatResponse:
         
         Returns:
             ChatResponse: A complete chat object containing all the created chat
-                         details including the generated UUID, timestamps, and
-                         participant information. The response includes id,
-                         users (array of participant UUIDs), created_at, and
-                         updated_at. If a chat already exists between these users,
-                         the existing chat will be returned.
+                         details. Fields include:
+                         - id (UUID): Unique chat identifier
+                         - users (List[ChatParticipantInfo]): Array of participant information
+                         - created_at (datetime): Chat creation timestamp
+                         - updated_at (datetime): Last update timestamp
+                         
+                         Each ChatParticipantInfo includes:
+                         - id (UUID): Participant's unique identifier
+                         - first_name (str): Participant's first name
+                         - last_name (str): Participant's last name
+                         - pfp_url (Optional[str]): Profile picture URL
+                         - phone (Optional[str]): Phone number
         
         Raises:
             HTTPException: Returns a 500 status code with error details if the
@@ -93,11 +100,22 @@ async def get_user_chats(user_id: str) -> ChatListResponse:
         
         Returns:
             ChatListResponse: A structured response containing a list of all
-                             chats for the specified user, including chat details
-                             and participant information. Each chat includes id,
-                             users (array of participant UUIDs), created_at, and
-                             updated_at. The response also includes metadata about
-                             the total number of chats.
+                             chats for the specified user. Fields include:
+                             - chats (List[ChatResponse]): List of chat conversations
+                             - total (int): Total number of chats for the user
+                             
+                             Each ChatResponse includes:
+                             - id (UUID): Unique chat identifier
+                             - users (List[ChatParticipantInfo]): Array of participant information
+                             - created_at (datetime): Chat creation timestamp
+                             - updated_at (datetime): Last update timestamp
+                             
+                             Each ChatParticipantInfo includes:
+                             - id (UUID): Participant's unique identifier
+                             - first_name (str): Participant's first name
+                             - last_name (str): Participant's last name
+                             - pfp_url (Optional[str]): Profile picture URL
+                             - phone (Optional[str]): Phone number
         
         Raises:
             HTTPException: Returns a 500 status code with error details if the
@@ -142,14 +160,22 @@ async def get_chat_with_participants(chat_id: str, user_id: str) -> ChatWithPart
         
         Returns:
             ChatWithParticipantsResponse: A comprehensive chat response containing
-                                         detailed information including chat metadata,
-                                         participant details (names, profile pictures,
-                                         phone numbers), last message content and
-                                         timestamp, and unread message count for the
-                                         requesting user. The response includes id,
-                                         users, participants (detailed info), created_at,
-                                         updated_at, last_message, last_message_at,
-                                         and unread_count.
+                                         detailed information. Fields include:
+                                         - id (UUID): Unique chat identifier
+                                         - users (List[UUID]): Array of participant UUIDs
+                                         - participants (List[ChatParticipantInfo]): Detailed participant information
+                                         - created_at (datetime): Chat creation timestamp
+                                         - updated_at (datetime): Last update timestamp
+                                         - last_message (Optional[str]): Content of the last message
+                                         - last_message_at (Optional[datetime]): Timestamp of the last message
+                                         - unread_count (int): Number of unread messages
+                                         
+                                         Each ChatParticipantInfo includes:
+                                         - id (UUID): Participant's unique identifier
+                                         - first_name (str): Participant's first name
+                                         - last_name (str): Participant's last name
+                                         - pfp_url (Optional[str]): Profile picture URL
+                                         - phone (Optional[str]): Phone number
         
         Raises:
             HTTPException: Returns a 404 status code if the chat_id doesn't exist,
@@ -200,11 +226,14 @@ async def send_message(chat_id: str, sender_id: str, content: str) -> MessageRes
         
         Returns:
             MessageResponse: A complete message object containing all the sent
-                            message details including the generated UUID, content,
-                            sender information, and timestamps. The response
-                            includes id, chat_id, sender_id (normalized to user_id),
-                            content, read_at (null for new messages), created_at,
-                            and updated_at.
+                            message details. Fields include:
+                            - id (UUID): Unique message identifier
+                            - chat_id (UUID): ID of the chat this message belongs to
+                            - sender_id (UUID): ID of the user who sent the message
+                            - content (str): Message content/text
+                            - read_at (Optional[datetime]): Timestamp when message was read (null for new messages)
+                            - created_at (datetime): Message creation timestamp
+                            - updated_at (datetime): Last update timestamp
         
         Raises:
             HTTPException: Returns a 404 status code if the chat_id doesn't exist,
@@ -262,13 +291,19 @@ async def get_chat_messages(chat_id: str, user_id: str, limit: int = 50, offset:
         
         Returns:
             MessageListResponse: A structured response containing a list of
-                                messages from the specified chat, including
-                                message details and pagination information.
-                                Each message includes id, chat_id, sender_id,
-                                content, read_at, created_at, and updated_at.
-                                The response also includes total message count,
-                                has_more flag for pagination, and the actual
-                                messages array.
+                                messages from the specified chat. Fields include:
+                                - messages (List[MessageResponse]): List of messages in the chat
+                                - total (int): Total number of messages in the chat
+                                - has_more (bool): Whether there are more messages beyond the current page
+                                
+                                Each MessageResponse includes:
+                                - id (UUID): Unique message identifier
+                                - chat_id (UUID): ID of the chat this message belongs to
+                                - sender_id (UUID): ID of the user who sent the message
+                                - content (str): Message content/text
+                                - read_at (Optional[datetime]): Timestamp when message was read
+                                - created_at (datetime): Message creation timestamp
+                                - updated_at (datetime): Last update timestamp
         
         Raises:
             HTTPException: Returns a 404 status code if the chat_id doesn't
@@ -326,10 +361,10 @@ async def mark_messages_read(chat_id: str, user_id: str, message_ids: List[str])
         
         Returns:
             dict: A response object confirming the read status update was
-                  successful, including success status, message count, and
-                  timestamp. The response includes success (boolean), message
-                  (description of the operation), and read_at (ISO timestamp
-                  when messages were marked as read).
+                  successful. Fields include:
+                  - success (bool): Whether the operation was successful
+                  - message (str): Description of the operation
+                  - read_at (str): ISO timestamp when messages were marked as read
         
         Raises:
             HTTPException: Returns a 404 status code if the chat_id doesn't

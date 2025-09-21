@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     OPENPHONE_FROM_NUMBER: str
 
     OPENAI_API_KEY: str
+    
+    # Email Configuration
+    EMAIL_SENDER: str = "info@helperu.com"
+    EMAIL_PASSWORD: str
+    SMTP_SERVER: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 

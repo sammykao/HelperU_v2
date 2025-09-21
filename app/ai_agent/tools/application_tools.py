@@ -63,11 +63,19 @@ async def create_application(
         
         Returns:
             ApplicationResponse: A complete application object containing all the
-                                created application details including the generated
-                                UUID, timestamps, and formatted data. The response
-                                includes id, helper_id, task_id, introduction_message,
-                                supplements_url, status, created_at, and updated_at.
-                                The status will typically be 'pending' for new applications.
+                                created application details. Fields include:
+                                - application (ApplicationInfo): Application details
+                                - helper (HelperResponse): Helper information
+                                - task (Optional[TaskResponse]): Task information
+                                
+                                ApplicationInfo includes:
+                                - id (str): Unique application identifier
+                                - task_id (str): ID of the task being applied to
+                                - helper_id (str): ID of the helper applying
+                                - introduction_message (str): Helper's introduction message
+                                - supplements_url (Optional[str]): URL of supplementary materials
+                                - created_at (datetime): Application creation timestamp
+                                - updated_at (datetime): Last update timestamp
         
         Raises:
             HTTPException: Returns a 500 status code with error details if the
@@ -118,9 +126,19 @@ async def get_application(application_id: str) -> ApplicationResponse:
         
         Returns:
             ApplicationResponse: A complete application object containing all
-                                application details including id, helper_id, task_id,
-                                introduction_message, supplements_url, status,
-                                created_at, and updated_at.
+                                application details. Fields include:
+                                - application (ApplicationInfo): Application details
+                                - helper (HelperResponse): Helper information
+                                - task (Optional[TaskResponse]): Task information
+                                
+                                ApplicationInfo includes:
+                                - id (str): Unique application identifier
+                                - task_id (str): ID of the task being applied to
+                                - helper_id (str): ID of the helper applying
+                                - introduction_message (str): Helper's introduction message
+                                - supplements_url (Optional[str]): URL of supplementary materials
+                                - created_at (datetime): Application creation timestamp
+                                - updated_at (datetime): Last update timestamp
         Raises:
             HTTPException: Returns a 404 status code if the application_id doesn't
                           exist in the system, or a 500 status code for other errors
@@ -160,13 +178,14 @@ async def get_task_applications(task_id: str) -> ApplicationListResponse:
         
         Returns:
             ApplicationListResponse: A structured response containing a list of
-                                    all applications for the specified task,
-                                    including application details, helper information,
-                                    and application statuses. Each application includes
-                                    id, helper_id, task_id, introduction_message,
-                                    supplements_url, status, created_at, and updated_at.
-                                    The response also includes metadata about the
-                                    total number of applications and pagination info.
+                                    all applications for the specified task. Fields include:
+                                    - applications (List[ApplicationResponse]): List of applications
+                                    - total_count (int): Total number of applications for the task
+                                    
+                                    Each ApplicationResponse includes:
+                                    - application (ApplicationInfo): Application details
+                                    - helper (HelperResponse): Helper information
+                                    - task (Optional[TaskResponse]): Task information
         
         Raises:
             HTTPException: Returns a 404 status code if the task_id doesn't exist
@@ -208,13 +227,14 @@ async def get_helper_applications(helper_id: str) -> ApplicationListResponse:
         Returns:
             ApplicationListResponse: A structured response containing a list of
                                     all applications submitted by the specified
-                                    helper, including application details, task
-                                    information, and application statuses. Each
-                                    application includes id, helper_id, task_id,
-                                    introduction_message, supplements_url, status,
-                                    created_at, and updated_at. The response also
-                                    includes metadata about the total number of
-                                    applications and pagination info.
+                                    helper. Fields include:
+                                    - applications (List[ApplicationResponse]): List of applications
+                                    - total_count (int): Total number of applications by the helper
+                                    
+                                    Each ApplicationResponse includes:
+                                    - application (ApplicationInfo): Application details
+                                    - helper (HelperResponse): Helper information
+                                    - task (Optional[TaskResponse]): Task information
         
         Raises:
             HTTPException: Returns a 404 status code if the helper_id doesn't exist
@@ -258,11 +278,14 @@ async def invite_helper_to_task(task_id: str, helper_id: str) -> InvitationRespo
         
         Returns:
             InvitationResponse: A complete invitation object containing all
-                                the invitation details including the generated
-                                UUID, timestamps, and formatted data. The response
-                                includes id, task_id, helper_id, status, created_at,
-                                and updated_at. The status will typically be 'sent'
-                                for new invitations.
+                                the invitation details. Fields include:
+                                - id (str): Unique invitation identifier
+                                - task_id (str): ID of the task being invited to
+                                - helper_id (str): ID of the helper being invited
+                                - created_at (datetime): Invitation creation timestamp
+                                - updated_at (datetime): Last update timestamp
+                                - helpers (Optional[HelperResponse]): Helper information
+                                - task (Optional[TaskResponse]): Task information
         
         Raises:
             HTTPException: Returns a 404 status code if the task_id or helper_id
@@ -306,13 +329,18 @@ async def get_task_invitations(task_id: str) -> InvitationListResponse:
         
         Returns:
             InvitationListResponse: A structured response containing a list of
-                                    all invitations sent for the specified task,
-                                    including invitation details, helper information,
-                                    and invitation statuses. Each invitation includes
-                                    id, task_id, helper_id, status, created_at, and
-                                    updated_at. The response also includes metadata
-                                    about the total number of invitations and
-                                    pagination info.
+                                    all invitations sent for the specified task. Fields include:
+                                    - invitations (List[InvitationResponse]): List of invitations
+                                    - total_count (int): Total number of invitations for the task
+                                    
+                                    Each InvitationResponse includes:
+                                    - id (str): Unique invitation identifier
+                                    - task_id (str): ID of the task being invited to
+                                    - helper_id (str): ID of the helper being invited
+                                    - created_at (datetime): Invitation creation timestamp
+                                    - updated_at (datetime): Last update timestamp
+                                    - helpers (Optional[HelperResponse]): Helper information
+                                    - task (Optional[TaskResponse]): Task information
         
         Raises:
             HTTPException: Returns a 404 status code if the task_id doesn't exist
@@ -354,12 +382,18 @@ async def get_helper_invitations(helper_id: str) -> InvitationListResponse:
         Returns:
             InvitationListResponse: A structured response containing a list of
                                     all invitations received by the specified
-                                    helper, including invitation details, task
-                                    information, and invitation statuses. Each
-                                    invitation includes id, task_id, helper_id,
-                                    status, created_at, and updated_at. The response
-                                    also includes metadata about the total number
-                                    of invitations and pagination info.
+                                    helper. Fields include:
+                                    - invitations (List[InvitationResponse]): List of invitations
+                                    - total_count (int): Total number of invitations received by the helper
+                                    
+                                    Each InvitationResponse includes:
+                                    - id (str): Unique invitation identifier
+                                    - task_id (str): ID of the task being invited to
+                                    - helper_id (str): ID of the helper being invited
+                                    - created_at (datetime): Invitation creation timestamp
+                                    - updated_at (datetime): Last update timestamp
+                                    - helpers (Optional[HelperResponse]): Helper information
+                                    - task (Optional[TaskResponse]): Task information
         
         Raises:
             HTTPException: Returns a 404 status code if the helper_id doesn't exist

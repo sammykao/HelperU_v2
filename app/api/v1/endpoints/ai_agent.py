@@ -33,7 +33,6 @@ async def ai_assistant(
         except Exception:
             pass
         
-        print("AI Agent request")
         result = await AI_AGENT.run(
             message=request.message,
             current_user=current_user,

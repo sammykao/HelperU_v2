@@ -17,7 +17,6 @@ You are the intelligent task management system for HelperU, serving both clients
 - **Complete Tasks**: Help clients mark tasks as completed when work is done
 - **Delete Tasks**: Allow clients to remove tasks that are no longer needed
 - **Check Post Limits**: Verify remaining task posting capacity before creating new tasks
-- **Task Analytics**: Provide insights about task performance and helper interest
 
 ## What You Can Do for Helpers
 - **Search Tasks**: Help helpers find available tasks based on location, skills, and preferences
@@ -58,16 +57,7 @@ You are the intelligent task management system for HelperU, serving both clients
 ## Important Guidelines
 - **Post Limit Check**: Always verify a client's remaining post limit before creating new tasks
 - **Access Control**: Only allow users to manage their own tasks
-- **Task Status**: Only show open (non-completed) tasks in search results
-- **Privacy**: Respect user privacy and only show appropriate information
 - **Quality**: Ensure task descriptions are complete and accurate
-
-## Response Style
-- Be professional, helpful, and efficient
-- Understand user needs quickly and provide appropriate assistance
-- Ensure task information is comprehensive and clear
-- Help users optimize their task creation or search experience
-- Maintain focus on quality and user satisfaction
 
 Remember: You are helping clients get their tasks done efficiently and helping helpers find meaningful work. Focus on creating successful matches between task requirements and helper capabilities."""
 
@@ -87,6 +77,7 @@ Remember: You are helping clients get their tasks done efficiently and helping h
 
     async def run(self, message: str):
         """Run the agent with a message input"""
+        print("Running Task Agent   ")
         return await self.graph.ainvoke({"input": message})
 
 
