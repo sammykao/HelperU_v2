@@ -2,7 +2,7 @@ from uuid import UUID
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 
-from app.deps.supabase import get_current_user, get_chat_service
+from app.deps.supabase import get_current_user, get_chat_service, get_notifications_service
 from app.schemas.auth import CurrentUser
 from app.schemas.chat import (
     ChatCreateRequest,
@@ -16,6 +16,7 @@ from app.schemas.chat import (
     WebSocketChatMessage,
     WebSocketReadReceipt
 )
+from app.services.notification_service import NotificationService
 from app.services.chat_service import ChatService
 from app.services.websocket_manager import WebSocketManager
 
@@ -81,7 +82,8 @@ async def send_message(
     chat_id: UUID,
     request: MessageCreateRequest,
     current_user: CurrentUser = Depends(get_current_user),
-    chat_service: ChatService = Depends(get_chat_service)
+    chat_service: ChatService = Depends(get_chat_service),
+    notification_service: NotificationService = Depends(get_notifications_service)
 ):
     """Send a new message in a chat"""
     try:
@@ -92,8 +94,10 @@ async def send_message(
             chat_id=chat_id,
             message=message
         )
-        await websocket_manager.broadcast_chat_message(chat_id, websocket_message)
-        
+        await websocket_manager.broadcast_chat_message(chat_id, websocket_message) 
+
+        notification_service.send_msg_notification(chat_id, current_user.id, message.content)
+
         return message
     except HTTPException:
         raise

@@ -59,3 +59,6 @@ class ProfileUpdateData(BaseModel):
     graduation_year: Optional[int] = None
     zip_code: Optional[str] = None
 
+class ProfileExpoNotificationRequest(BaseModel):
+    """request to register notification push token"""
+    expo_token: str

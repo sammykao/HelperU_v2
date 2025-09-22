@@ -24,7 +24,7 @@ class ChatService:
     def __init__(self, admin_client: Client, openphone_service: OpenPhoneService = None):
         self.admin_client = admin_client
         self.openphone_service = openphone_service
-
+        
     async def create_chat(self, user_id: UUID, participant_id: UUID) -> ChatResponse:
         """Create a new chat between two users"""
         try:
@@ -112,8 +112,10 @@ class ChatService:
                     detail="Chat not found"
                 )
             row = result.data[0]
+
             users = [p["user_id"] for p in (row.get("participants") or [])]
             if user_id not in users:
+
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"
@@ -160,8 +162,13 @@ class ChatService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
+
+            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
+            if UUID(str(sender_id)) not in participant_user_ids:
+
             participant_user_ids = [row["user_id"] for row in cu_result.data]
             if sender_id not in participant_user_ids:
+
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"
@@ -243,8 +250,10 @@ class ChatService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
+
             participant_user_ids = [row["user_id"] for row in cu_result.data]
             if user_id not in participant_user_ids:
+
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"

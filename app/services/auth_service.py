@@ -225,7 +225,7 @@ class AuthService:
                     "phone": normalized_phone,
                 }
             )
-            self.public_client.auth.resend({"type": "signup", "email": email})
+            # self.public_client.auth.resend({"type": "signup", "email": payload.email})
 
             return HelperAccountResponse(
                 success=True,
@@ -235,6 +235,7 @@ class AuthService:
         except HTTPException:
             raise
         except Exception as exc:
+            print(exc)
             raise HTTPException(
                 status_code=400, detail=f"Failed to create helper account: {str(exc)}"
             )
@@ -290,7 +291,7 @@ class AuthService:
             # Check if verification was successful
             if not auth_response.user:
                 raise HTTPException(status_code=400, detail="Invalid OTP token")
-            
+
             return OTPResponse(
                 success=True, message=f"Email {email} verified successfully"
             )
@@ -554,10 +555,14 @@ class AuthService:
             self.admin_client.auth.admin.update_user_by_id(user_id, {"email": email})
             result = await self.resend_email_verification(email)
             if not result.success:
-                raise HTTPException(status_code=500, detail="Failed to resend email verification")
+                raise HTTPException(
+                    status_code=500, detail="Failed to resend email verification"
+                )
             return result
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"Failed to update helper email: {str(exc)}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to update helper email: {str(exc)}"
+            )
 
     async def check_helper_completion(self, user_id: str) -> bool:
         """Check if a helper account exists by email"""
@@ -575,5 +580,7 @@ class AuthService:
         except HTTPException:
             raise
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"Failed to check helper existence: {str(exc)}")
-        
+            raise HTTPException(
+                status_code=500, detail=f"Failed to check helper existence: {str(exc)}"
+            )
+

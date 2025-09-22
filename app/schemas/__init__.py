@@ -22,6 +22,7 @@ from .auth import (
 from .profile import (
     ClientProfileData,
     HelperProfileData,
+    ProfileExpoNotificationRequest,
     ProfileUpdateData,
     UserProfileStatusResponse,
     ProfileUpdateResponse
@@ -136,6 +137,7 @@ __all__ = [
     "ProfileUpdateData",
     "UserProfileStatusResponse",
     "ProfileUpdateResponse",
+    "ProfileExpoNotificationRequest",
     
     # Subscription schemas
     "SubscriptionStatus",

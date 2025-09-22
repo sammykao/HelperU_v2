@@ -1,3 +1,4 @@
+from app.schemas.profile import ProfileExpoNotificationRequest
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 
@@ -153,3 +154,22 @@ async def delete_profile(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete profile: {str(e)}",
         )
+
+@router.post("/register-notification-device")
+async def register_device(
+    request: ProfileExpoNotificationRequest,
+    current_user: str = Depends(get_current_user),
+    profile_service: ProfileService = Depends(get_profile_service),
+):
+    """register new expo device - used for push notifications"""
+    try:
+        await profile_service.register_device(current_user.id, request.expo_token)
+        return {"success": True}
+    except HTTPException:
+        raise 
+    except Exception as e:
+        print(f"error in route: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to register device: {str(e)}"
+        )
+

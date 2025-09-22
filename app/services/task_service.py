@@ -289,16 +289,18 @@ class TaskService:
     async def get_available_tasks(self) -> Optional[PublicTaskResponse]:
         try:
             # query non sensitive information from tasks table
-            result = await (
+            result = (
                 self.admin_client.table("tasks")
                 .select(
-                    "id, title, description, location_type, zip_code, hourly_rate, created_at"
+                    "id, title, description, location_type, zip_code, hourly_rate, created_at, dates"
                 )
                 .is_("completed_at", None)
                 .order("created_at", desc=True)
                 .limit(20)
                 .execute()
             )
+
+            print(result.data)
 
             if not result or not result.data:
                 return PublicTaskResponse(
@@ -319,6 +321,7 @@ class TaskService:
         except HTTPException:
             raise
         except Exception as e:
+            print(e)
             raise HTTPException(
                 status_code=500, detail=f"Failed to fetch available tasks: {str(e)}"
             )

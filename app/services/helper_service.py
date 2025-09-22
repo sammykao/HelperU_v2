@@ -24,10 +24,10 @@ class HelperService:
 
     async def get_helpers(self, limit: int = 20, offset: int = 0) -> HelperListResponse:
         try:
-            helpers_result = self.admin_client.table("helpers").select("*").limit(limit).offset(offset).execute()
+            helpers_result = self.admin_client.table("helpers").select("*").offset(offset).execute()
             if not helpers_result.data:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No helpers found")
-            
+ 
             helpers = [HelperResponse(**helper) for helper in helpers_result.data]
             return HelperListResponse(helpers=helpers, total_count=len(helpers))
         except Exception as e:
