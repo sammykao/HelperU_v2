@@ -1,6 +1,7 @@
 from supabase import Client
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.services.notification_service import NotificationService
 from app.services.supabase_client import get_public_supabase, get_admin_supabase
 from app.services.profile_service import ProfileService
 from app.services.stripe_service import StripeService
@@ -10,6 +11,7 @@ from app.services.helper_service import HelperService
 from app.services.application_service import ApplicationService
 from app.services.chat_service import ChatService
 from app.services.openphone_service import OpenPhoneService
+from app.services.notification_service import NotificationService
 from app.schemas.auth import CurrentUser
 
 security = HTTPBearer()
@@ -117,3 +119,7 @@ def get_chat_service() -> ChatService:
 def get_openphone_service() -> OpenPhoneService:
     """Dependency to get OpenPhone service for SMS notifications"""
     return OpenPhoneService()
+
+def get_notifications_service() -> NotificationService:
+    admin_client = get_supabase_admin()
+    return NotificationService(admin_client)

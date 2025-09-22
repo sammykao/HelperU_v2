@@ -124,7 +124,7 @@ class PublicTask(BaseModel):
     title: str
     description: str
     location_type: str
-    zip_code: str
+    zip_code: Optional[str]
     hourly_rate: int
     created_at: str
 

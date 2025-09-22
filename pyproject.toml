@@ -20,6 +20,7 @@ dependencies = [
   "langgraph-supervisor>=0.0.29",
   "langgraph-checkpoint-sqlite>=2.0.11",
   "langchain-openai>=0.3.32",
+  "exponent-server-sdk>=2.2.0",
 ]
 
 [tool.uv]

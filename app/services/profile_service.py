@@ -34,6 +34,9 @@ class ProfileService:
                 .execute()
             )
 
+            print("helper")
+            print(helper_result)
+
             # Check if user exists in both tables (shared auth)
             if client_result.data and helper_result.data:
                 client_data = ClientProfileData(**client_result.data[0])
@@ -189,4 +192,47 @@ class ProfileService:
         except Exception as exc:
             raise HTTPException(
                 status_code=500, detail=f"Failed to update helper profile: {str(exc)}"
+            )
+
+    async def register_device(self, user_id: str, expo_token: str):
+        try:
+            client_result = (
+                self.admin_client.table("clients")
+                .select("id, push_notification_tokens")
+                .eq("id", user_id)
+                .execute()
+            )
+
+            if client_result.data:
+                tokens = client_result.data[0].get("push_notification_tokens") or []
+                if expo_token not in tokens:
+                    updated_tokens = tokens + [expo_token]
+                    self.admin_client.table("clients").update(
+                        {"push_notification_tokens": updated_tokens}
+                    ).eq("id", user_id).execute()
+                return
+
+            helper_result = (
+                self.admin_client.table("helpers")
+                .select("id, push_notification_tokens")
+                .eq("id", user_id)
+                .execute()
+            )
+
+            if helper_result.data:
+                tokens = helper_result.data[0].get("push_notification_tokens") or []
+                if expo_token not in tokens:
+                    updated_tokens = tokens + [expo_token]
+                    self.admin_client.table("helpers").update(
+                        {"push_notification_tokens": updated_tokens}
+                    ).eq("id", user_id).execute()
+                return
+
+            # if user not found in either table
+            raise HTTPException(
+                status_code=404, detail=f"User {user_id} not found in clients or helpers"
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to register device: {str(exc)}"
             )
