@@ -78,7 +78,6 @@ Remember: You are helping clients and helpers communicate effectively to ensure 
             model=self.llm,
             tools=self.tools,
             prompt=self.SYSTEM_INSTRUCTION,
-            debug=True
         )
 
 

@@ -3,6 +3,7 @@ from app.deps.supabase import get_current_user, get_application_service
 from app.services.application_service import ApplicationService
 from app.schemas.applications import (
     ApplicationCreateRequest,
+    ApplicationCreateData,
     ApplicationResponse,
     ApplicationListResponse,
 )
@@ -70,29 +71,76 @@ async def get_applications_by_helper(
             detail=f"Failed to get helper applications: {str(e)}",
         )
 
-
 @router.post("/", response_model=ApplicationResponse)
 async def create_application(
-    # task_id: str,
-    application_create_request: ApplicationCreateRequest,
+    application_data: ApplicationCreateData,
     current_user: CurrentUser = Depends(get_current_user),
-    application_service: ApplicationService = Depends(get_application_service),
+    application_service: ApplicationService = Depends(get_application_service)
 ):
     """Create a new application for a task (only helpers can apply)"""
     try:
-        print(application_create_request)
+        # Construct the full request with task_id from the request body
+        application_create_request = ApplicationCreateRequest(
+            task_id=application_data.task_id,
+            helper_id=current_user.id,
+            introduction_message=application_data.introduction_message,
+            supplements_url=application_data.supplements_url
+        )
+        
         return await application_service.create_application(
-            current_user.id,
-            application_create_request.task_id,
-            application_create_request,
+            current_user.id, 
+            application_create_request.task_id, 
+            application_create_request
         )
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create application: {str(e)}",
+            detail=f"Failed to create application: {str(e)}"
         )
+        
+# @router.post("/", response_model=ApplicationResponse)
+# async def create_application(
+# <<<<<<< notifications
+#     # task_id: str,
+#     application_create_request: ApplicationCreateRequest,
+# =======
+#     application_data: ApplicationCreateData,
+# >>>>>>> main
+#     current_user: CurrentUser = Depends(get_current_user),
+#     application_service: ApplicationService = Depends(get_application_service),
+# ):
+#     """Create a new application for a task (only helpers can apply)"""
+#     try:
+# <<<<<<< notifications
+#         print(application_create_request)
+#         return await application_service.create_application(
+#             current_user.id,
+#             application_create_request.task_id,
+#             application_create_request,
+# =======
+#         # Construct the full request with task_id from the request body
+#         application_create_request = ApplicationCreateRequest(
+#             task_id=application_data.task_id,
+#             helper_id=current_user.id,
+#             introduction_message=application_data.introduction_message,
+#             supplements_url=application_data.supplements_url
+#         )
+        
+#         return await application_service.create_application(
+#             current_user.id, 
+#             application_create_request.task_id, 
+#             application_create_request
+# >>>>>>> main
+#         )
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=f"Failed to create application: {str(e)}",
+#         )
 
 
 @router.get("/{application_id}", response_model=ApplicationResponse)

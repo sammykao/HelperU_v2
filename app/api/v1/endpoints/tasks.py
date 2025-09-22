@@ -35,11 +35,27 @@ async def create_task(
 
 @router.get("/", response_model=TaskSearchListResponse)
 async def get_tasks(
-    search_request: TaskSearchRequest,
+    search_zip_code: str,
+    search_query: str = None,
+    search_location_type: str = None,
+    min_hourly_rate: float = None,
+    max_hourly_rate: float = None,
+    search_limit: int = 20,
+    search_offset: int = 0,
     task_service: TaskService = Depends(get_task_service),
 ):
     """Get tasks with pagination, filtering, and distance-based sorting"""
     try:
+        # Create TaskSearchRequest object from individual parameters
+        search_request = TaskSearchRequest(
+            search_zip_code=search_zip_code,
+            search_query=search_query,
+            search_location_type=search_location_type,
+            min_hourly_rate=min_hourly_rate,
+            max_hourly_rate=max_hourly_rate,
+            search_limit=search_limit,
+            search_offset=search_offset
+        )
         return await task_service.search_tasks(search_request)
     except HTTPException:
         raise

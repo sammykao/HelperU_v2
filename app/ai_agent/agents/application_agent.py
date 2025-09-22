@@ -80,7 +80,6 @@ Remember: You are helping helpers get hired for tasks and helping clients find t
             model=self.llm,
             tools=self.tools,
             prompt=self.SYSTEM_INSTRUCTION,
-            debug=True,
         )
 
         

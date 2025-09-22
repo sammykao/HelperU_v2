@@ -81,7 +81,6 @@ Remember: You are helping users create profiles that accurately represent them a
             model=self.llm,
             tools=self.tools,
             prompt=self.SYSTEM_INSTRUCTION,
-            debug=True
         )
 
     async def run(self, message: str):

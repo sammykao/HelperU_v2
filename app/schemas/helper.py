@@ -32,3 +32,5 @@ class HelperListResponse(BaseModel):
     """Response model for list of helpers"""
     helpers: List[HelperResponse]
     total_count: int
+    limit: int
+    offset: int

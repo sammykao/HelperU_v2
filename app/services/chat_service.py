@@ -24,7 +24,7 @@ class ChatService:
     def __init__(self, admin_client: Client, openphone_service: OpenPhoneService = None):
         self.admin_client = admin_client
         self.openphone_service = openphone_service
-
+        
     async def create_chat(self, user_id: UUID, participant_id: UUID) -> ChatResponse:
         """Create a new chat between two users"""
         try:
@@ -52,9 +52,7 @@ class ChatService:
                 {"chat_id": chat["id"], "user_id": str(participant_id)}
             ]).execute()
 
-            profiles = [user_id, participant_id]
-            
-            chat['users'] = profiles 
+            chat['users'] = [await self._get_participant_info(user_id), await self._get_participant_info(participant_id)]
             return ChatResponse(**chat)
 
         except HTTPException:
@@ -81,7 +79,9 @@ class ChatService:
             for row in result.data:
                 chat_data = {
                     'id': row['id'],
-                    'users': [UUID(p["user_id"]) for p in row.get("participants") or []],
+                    'users': [ 
+                        await self._get_participant_info(p["user_id"]) for p in (row.get("participants") or [])
+                    ],
                     'created_at': row['created_at'],
                     'updated_at': row['updated_at']
                 }
@@ -111,12 +111,11 @@ class ChatService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
-
             row = result.data[0]
-            users = [UUID(p["user_id"]) for p in (row.get("participants") or [])]
 
-     
-            if UUID(str(user_id)) not in users:
+            users = [p["user_id"] for p in (row.get("participants") or [])]
+            if user_id not in users:
+
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"
@@ -125,7 +124,7 @@ class ChatService:
             # Get participant information
             participants = []
             for participant_id in users:
-                participant_info = await self._get_participant_info(str(participant_id))
+                participant_info = await self._get_participant_info(participant_id)
                 participants.append(participant_info)
 
             # Get last message and unread count
@@ -163,8 +162,13 @@ class ChatService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
+
             participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
             if UUID(str(sender_id)) not in participant_user_ids:
+
+            participant_user_ids = [row["user_id"] for row in cu_result.data]
+            if sender_id not in participant_user_ids:
+
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"
@@ -246,8 +250,10 @@ class ChatService:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
-            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
-            if UUID(str(user_id)) not in participant_user_ids:
+
+            participant_user_ids = [row["user_id"] for row in cu_result.data]
+            if user_id not in participant_user_ids:
+
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied to this chat"
@@ -294,17 +300,20 @@ class ChatService:
     async def mark_messages_read(self, chat_id: UUID, user_id: UUID, request: ChatMarkReadRequest) -> dict:
         """Mark messages as read"""
         try:
+
+            print(chat_id, user_id, request)
             # Verify user is participant in chat via chat_users
             cu_result = (self.admin_client.table("chat_users")
                 .select("id,user_id")
-                .eq("chat_id", str(chat_id))
+                .eq("chat_id", chat_id)
                 .execute())
+            print(cu_result)
             if not cu_result.data:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
-            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
+            participant_user_ids = [row["user_id"] for row in cu_result.data]
             if user_id not in participant_user_ids:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -358,11 +367,15 @@ class ChatService:
             if not result.data:
                 return None
             chat = result.data[0]
-            chat['users'] = [UUID(p["user_id"]) for p in (chat.get("participants") or [])]
+            chat['users'] = [await self._get_participant_info(p["user_id"]) for p in (chat.get("participants") or [])]
             return ChatResponse(**chat)
 
         except Exception:
             return None
+
+    async def get_chat_between(self, user_id: UUID, participant_id: UUID) -> Optional[ChatResponse]:
+        """Public wrapper to get a direct chat between two users (None if not found)."""
+        return await self._get_chat_by_participants(user_id, participant_id)
 
     async def _get_participant_info(self, user_id: str) -> ChatParticipantInfo:
         """Get basic participant information"""

@@ -13,12 +13,15 @@ from app.schemas.task import (
     TaskSearchListResponse,
     PublicTask,
     PublicTaskResponse,
+    ClientInfo,
 )
 from app.services.stripe_service import StripeService
 
 
 class TaskService:
     """Service for handling task operations and business logic"""
+
+    ENUM_LOCATION_TYPE = ["remote", "in-person"]
 
     def __init__(self, admin_client: Client, stripe_service: StripeService):
         self.admin_client = admin_client
@@ -27,8 +30,7 @@ class TaskService:
     async def create_task(self, client_id: str, request: TaskCreate) -> TaskResponse:
         """Create a new task with validation"""
         try:
-            # Check if user is a client
-
+            # Check if user is a client            
             client = self.admin_client.table("clients").select("*").eq("id", client_id).execute()
             if not client.data:
                 raise HTTPException(status_code=404, detail="Client not found")
@@ -44,16 +46,16 @@ class TaskService:
             task_payload["client_id"] = client_id
 
             # Create the task
-
+            if request.location_type not in self.ENUM_LOCATION_TYPE:
+                raise HTTPException(status_code=400, detail="Invalid location type, location type must be one of the following: " + ", ".join(self.ENUM_LOCATION_TYPE))
+            
             result = self.admin_client.table("tasks").insert(task_payload).execute()
 
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to create task")
 
             # Update client's post count (fire and forget) monthly and total
-            asyncio.create_task(
-                self.stripe_service.update_monthly_post_count(client_id)
-            )
+            asyncio.create_task(self.stripe_service.update_monthly_post_count(client_id))
             asyncio.create_task(self.update_client_post_count(client_id))
             # Return the created task
             created_task = result.data[0]
@@ -191,23 +193,6 @@ class TaskService:
         """Search tasks with filters using efficient count and data queries"""
         try:
             # First, get the total count efficiently without pulling all data
-            count_params = search_request.model_dump(exclude={"limit", "offset"})
-
-            count_result = self.admin_client.rpc(
-                "count_tasks_matching_criteria",
-                count_params
-            ).execute()
-            
-            total_count = count_result.data if count_result else 0
-            
-            # If no tasks match criteria, return empty response
-            if total_count == 0:
-                return TaskSearchListResponse(
-                    tasks=[],
-                    total_count=0,
-                    limit=search_request.limit,
-                    offset=search_request.offset,
-                )
             
             result = self.admin_client.rpc(
                 "get_tasks_with_distance",
@@ -217,9 +202,8 @@ class TaskService:
             if not result.data:
                 return TaskSearchListResponse(
                     tasks=[],
-                    total_count=0,
-                    limit=search_request.limit,
-                    offset=search_request.offset,
+                    limit=search_request.search_limit,
+                    offset=search_request.search_offset,
                 )
 
             # Convert to TaskSearchResponse objects
@@ -227,9 +211,8 @@ class TaskService:
 
             return TaskSearchListResponse(
                 tasks=tasks,
-                total_count=total_count,
-                limit=search_request.limit,
-                offset=search_request.offset,
+                limit=search_request.search_limit,
+                offset=search_request.search_offset,
             )
 
         except Exception as e:
@@ -275,9 +258,18 @@ class TaskService:
     async def update_client_post_count(self, client_id: str) -> None:
         """Update client's post count"""
         try:
+            # First get the current count
+            current_result = self.admin_client.table("clients").select("number_of_posts").eq("id", client_id).execute()
+            
+            if not current_result.data:
+                raise HTTPException(status_code=404, detail="Client not found")
+            
+            current_count = current_result.data[0].get("number_of_posts", 0)
+            new_count = current_count + 1
+            
             # Update client's post count
             result = self.admin_client.table("clients").update({
-                "number_of_posts": "number_of_posts + 1"
+                "number_of_posts": new_count
             }).eq("id", client_id).execute()
             
             if not result.data:

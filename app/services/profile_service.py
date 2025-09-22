@@ -62,7 +62,9 @@ class ProfileService:
                     ),
                     email_verified=False,  # Clients don't have email
                     phone_verified=True,  # If they're in the table, phone is verified
-                    profile_data=client_data.model_dump(),
+                    profile_data={
+                        "client": client_data.model_dump(),
+                    },
                 )
 
             if helper_result.data:
@@ -74,7 +76,9 @@ class ProfileService:
                     ),
                     email_verified=True,  # If they're in the table, email is verified
                     phone_verified=True,  # If they're in the table, phone is verified
-                    profile_data=helper_data.model_dump(),
+                    profile_data={
+                        "helper": helper_data.model_dump(),
+                    },
                 )
 
             # User exists in auth but not in profile tables
@@ -188,7 +192,6 @@ class ProfileService:
     async def delete_profile(self, user_id: str):
         try:
             result = self.admin_client.auth.admin.delete_user(user_id)
-            print(result)
         except Exception as exc:
             raise HTTPException(
                 status_code=500, detail=f"Failed to update helper profile: {str(exc)}"

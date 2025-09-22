@@ -108,31 +108,37 @@ END
 $$;
 
 -- Function to increment monthly post count
-CREATE OR REPLACE FUNCTION public.increment_monthly_post_count(user_uuid UUID)
-RETURNS BOOLEAN
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  current_month TEXT;
-  current_count INTEGER;
-BEGIN
-  -- Get current month in YYYY-MM format
-  current_month := to_char(now(), 'YYYY-MM');
-  
-  -- Get current count for this month
-  SELECT COALESCE(post_count, 0) INTO current_count
-  FROM public.monthly_post_counts
-  WHERE user_id = user_uuid AND year_month = current_month;
-  
-  -- Insert or update the count
-  INSERT INTO public.monthly_post_counts (user_id, year_month, post_count)
-  VALUES (user_uuid, current_month, current_count + 1)
-  ON CONFLICT (user_id, year_month)
-  DO UPDATE SET post_count = current_count + 1;
-  
-  RETURN TRUE;
+  CREATE OR REPLACE FUNCTION public.increment_monthly_post_count(user_uuid UUID)
+  RETURNS BOOLEAN
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  SET search_path = public
+  AS $$
+  DECLARE
+    current_month TEXT;
+    current_count INTEGER;
+  BEGIN
+    -- Get current month in YYYY-MM format
+    current_month := to_char(now(), 'YYYY-MM');
+    
+    -- Get current count for this month
+    SELECT post_count
+    INTO current_count
+    FROM public.monthly_post_counts
+    WHERE user_id = user_uuid AND year_month = current_month;
+
+    -- If no row was returned, set to 0
+    IF NOT FOUND THEN
+        current_count := 0;
+    END IF;
+
+    -- Insert or update the count
+    INSERT INTO public.monthly_post_counts (user_id, year_month, post_count)
+    VALUES (user_uuid, current_month, current_count + 1)
+    ON CONFLICT (user_id, year_month)
+    DO UPDATE SET post_count = current_count + 1;
+    
+    RETURN TRUE;
 END
 $$;
 

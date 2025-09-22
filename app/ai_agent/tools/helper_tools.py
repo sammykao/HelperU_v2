@@ -39,13 +39,15 @@ async def get_helper(helper_id: str) -> HelperResponse:
         
         Returns:
             HelperResponse: A complete helper profile object containing all
-                            public helper information including personal details,
-                            educational background, skills, location, and
-                            professional information. The response includes
-                            first_name, last_name, college, bio, graduation_year,
-                            zip_code, pfp_url, and other helper-specific profile
-                            fields. Sensitive information like phone_number,
-                            email, and application counts are excluded for privacy.
+                            public helper information. Fields include:
+                            - id (str): Unique helper identifier
+                            - first_name (str): Helper's first name
+                            - last_name (str): Helper's last name
+                            - college (str): Name of the college/university
+                            - bio (str): Helper's biography/description
+                            - graduation_year (int): Year of graduation
+                            - zip_code (str): ZIP code for location
+                            - pfp_url (Optional[str]): Profile picture URL
         
         Raises:
             HTTPException: Returns a 404 status code if the helper_id doesn't
@@ -92,12 +94,21 @@ async def get_helpers(limit: int = 20, offset: int = 0) -> HelperListResponse:
         
         Returns:
             HelperListResponse: A structured response containing a list of
-                                helpers with pagination metadata. Each helper
-                                includes all public profile information like
-                                first_name, last_name, college, bio, graduation_year,
-                                zip_code, and pfp_url. The response also includes
-                                total_count (total number of helpers in the system),
-                                limit, and offset for pagination management.
+                                helpers with pagination metadata. Fields include:
+                                - helpers (List[HelperResponse]): List of helper profiles
+                                - total_count (int): Total number of helpers in the system
+                                - limit (int): Number of helpers returned
+                                - offset (int): Number of helpers skipped
+                                
+                                Each HelperResponse includes:
+                                - id (str): Unique helper identifier
+                                - first_name (str): Helper's first name
+                                - last_name (str): Helper's last name
+                                - college (str): Name of the college/university
+                                - bio (str): Helper's biography/description
+                                - graduation_year (int): Year of graduation
+                                - zip_code (str): ZIP code for location
+                                - pfp_url (Optional[str]): Profile picture URL
         
         Raises:
             HTTPException: Returns a 404 status code if no helpers are found
@@ -177,12 +188,21 @@ async def search_helpers(
         
         Returns:
             HelperListResponse: A structured response containing search results
-                               with pagination metadata. Each helper includes all
-                               public profile information like first_name, last_name,
-                               college, bio, graduation_year, zip_code, and pfp_url.
-                               The response also includes total_count (total matching
-                               helpers), limit, and offset for pagination management.
-                               Results are ordered by relevance and creation date.
+                               with pagination metadata. Fields include:
+                               - helpers (List[HelperResponse]): List of matching helper profiles
+                               - total_count (int): Number of helpers matching the search criteria
+                               - limit (int): Number of helpers returned
+                               - offset (int): Number of helpers skipped
+                               
+                               Each HelperResponse includes:
+                               - id (str): Unique helper identifier
+                               - first_name (str): Helper's first name
+                               - last_name (str): Helper's last name
+                               - college (str): Name of the college/university
+                               - bio (str): Helper's biography/description
+                               - graduation_year (int): Year of graduation
+                               - zip_code (str): ZIP code for location
+                               - pfp_url (Optional[str]): Profile picture URL
         
         Raises:
             HTTPException: Returns a 500 status code with error details if the

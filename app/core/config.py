@@ -12,11 +12,20 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str
     STRIPE_PREMIUM_PRICE_ID: str
     
+    # Frontend Configuration
+    FRONTEND_URL: str       
+    
     # OpenPhone Configuration
     OPENPHONE_API_KEY: str
     OPENPHONE_FROM_NUMBER: str
 
     OPENAI_API_KEY: str
+    
+    # Email Configuration
+    EMAIL_SENDER: str = "info@helperu.com"
+    EMAIL_PASSWORD: str
+    SMTP_SERVER: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 

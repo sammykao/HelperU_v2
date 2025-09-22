@@ -14,3 +14,4 @@ class AIResponse(BaseModel):
     thread_id: Optional[str] = None
     agent_used: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
+    success: bool = True

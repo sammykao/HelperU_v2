@@ -21,6 +21,7 @@ dependencies = [
   "langgraph-checkpoint-sqlite>=2.0.11",
   "langchain-openai>=0.3.32",
   "exponent-server-sdk>=2.2.0",
+  "aiosqlite>=0.20.0",
 ]
 
 [tool.uv]

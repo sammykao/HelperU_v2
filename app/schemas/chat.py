@@ -8,11 +8,18 @@ class ChatCreateRequest(BaseModel):
     """Request to create a new chat"""
     participant_id: UUID = Field(..., description="ID of the other participant")
 
+class ChatParticipantInfo(BaseModel):
+    """Basic participant information"""
+    id: UUID
+    first_name: str
+    last_name: str
+    pfp_url: Optional[str]
+    phone: Optional[str] = None
 
 class ChatResponse(BaseModel):
     """Chat response model"""
     id: UUID
-    users: List[UUID] = Field(..., description="Array of user IDs in the chat")
+    users: List[ChatParticipantInfo] = Field(..., description="Array of participant information")
     created_at: datetime
     updated_at: datetime
 
@@ -51,13 +58,6 @@ class ChatMarkReadRequest(BaseModel):
     message_ids: List[UUID] = Field(..., description="IDs of messages to mark as read")
 
 
-class ChatParticipantInfo(BaseModel):
-    """Basic participant information"""
-    id: UUID
-    first_name: str
-    last_name: str
-    pfp_url: Optional[str]
-    phone: Optional[str] = None
 
 
 class ChatWithParticipantsResponse(BaseModel):
