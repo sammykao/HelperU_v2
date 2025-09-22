@@ -163,8 +163,8 @@ class ChatService:
                     detail="Chat not found"
                 )
 
-            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
-            if UUID(str(sender_id)) not in participant_user_ids:
+            # participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
+            # if UUID(str(sender_id)) not in participant_user_ids:
 
             participant_user_ids = [row["user_id"] for row in cu_result.data]
             if sender_id not in participant_user_ids:
