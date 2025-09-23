@@ -88,12 +88,15 @@ async def send_message(
     """Send a new message in a chat"""
     try:
         message = await chat_service.send_message(chat_id, current_user.id, request)
+
+        print("after sending message")
         
         # Broadcast message to WebSocket subscribers
         websocket_message = WebSocketChatMessage(
             chat_id=chat_id,
             message=message
         )
+
         await websocket_manager.broadcast_chat_message(chat_id, websocket_message) 
 
         notification_service.send_msg_notification(chat_id, current_user.id, message.content)

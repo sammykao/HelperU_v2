@@ -20,7 +20,7 @@ class NotificationService:
     def __init__(self, admin_client: Client):
         self.admin_client = admin_client
 
-    def send_msg_notification(self, chat_id: str, sender_id: str, message: str):
+    def send_msg_notification(self, chat_id: UUID, sender_id: str, message: str):
         try:
             cu_result = (self.admin_client.table("chat_users")
                 .select("id,user_id")
@@ -54,8 +54,8 @@ class NotificationService:
             response = (
                 self.admin_client
                 .table("helpers")
-                .select("user_id, push_notification_token")
-                .in_("user_id", filtered_ids)
+                .select("id, push_notification_token")
+                .in_("id", filtered_ids)
                 .execute()
             )
 
