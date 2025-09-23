@@ -1,8 +1,19 @@
 from uuid import UUID
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 
-from app.deps.supabase import get_current_user, get_chat_service, get_notifications_service
+from app.deps.supabase import (
+    get_current_user,
+    get_chat_service,
+    get_notifications_service,
+)
 from app.schemas.auth import CurrentUser
 from app.schemas.chat import (
     ChatCreateRequest,
@@ -14,7 +25,7 @@ from app.schemas.chat import (
     ChatMarkReadRequest,
     ChatWithParticipantsResponse,
     WebSocketChatMessage,
-    WebSocketReadReceipt
+    WebSocketReadReceipt,
 )
 from app.services.notification_service import NotificationService
 from app.services.chat_service import ChatService
@@ -28,7 +39,7 @@ websocket_manager = WebSocketManager()
 async def create_chat(
     request: ChatCreateRequest,
     current_user: CurrentUser = Depends(get_current_user),
-    chat_service: ChatService = Depends(get_chat_service)
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     """Create a new chat between current user and participant"""
     try:
@@ -38,14 +49,14 @@ async def create_chat(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create chat: {str(e)}"
+            detail=f"Failed to create chat: {str(e)}",
         )
 
 
 @router.get("/list", response_model=ChatListResponse)
 async def get_user_chats(
     current_user: CurrentUser = Depends(get_current_user),
-    chat_service: ChatService = Depends(get_chat_service)
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     """Get all chats for the current user"""
     try:
@@ -55,7 +66,7 @@ async def get_user_chats(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get chats: {str(e)}"
+            detail=f"Failed to get chats: {str(e)}",
         )
 
 
@@ -63,7 +74,7 @@ async def get_user_chats(
 async def get_chat_with_participants(
     chat_id: UUID,
     current_user: CurrentUser = Depends(get_current_user),
-    chat_service: ChatService = Depends(get_chat_service)
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     """Get chat with participant information"""
     try:
@@ -73,7 +84,7 @@ async def get_chat_with_participants(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get chat: {str(e)}"
+            detail=f"Failed to get chat: {str(e)}",
         )
 
 
@@ -83,23 +94,21 @@ async def send_message(
     request: MessageCreateRequest,
     current_user: CurrentUser = Depends(get_current_user),
     chat_service: ChatService = Depends(get_chat_service),
-    notification_service: NotificationService = Depends(get_notifications_service)
+    notification_service: NotificationService = Depends(get_notifications_service),
 ):
     """Send a new message in a chat"""
     try:
         message = await chat_service.send_message(chat_id, current_user.id, request)
 
         print("after sending message")
-        
+
         # Broadcast message to WebSocket subscribers
-        websocket_message = WebSocketChatMessage(
-            chat_id=chat_id,
-            message=message
+        websocket_message = WebSocketChatMessage(chat_id=chat_id, message=message)
+
+        await websocket_manager.broadcast_chat_message(chat_id, websocket_message)
+        await notification_service.send_msg_notification(
+            chat_id, current_user.id, message.content
         )
-
-        await websocket_manager.broadcast_chat_message(chat_id, websocket_message) 
-
-        notification_service.send_msg_notification(chat_id, current_user.id, message.content)
 
         return message
     except HTTPException:
@@ -107,7 +116,7 @@ async def send_message(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to send message: {str(e)}"
+            detail=f"Failed to send message: {str(e)}",
         )
 
 
@@ -115,20 +124,20 @@ async def send_message(
 async def get_chat_with_participant(
     participant_id: UUID,
     current_user: CurrentUser = Depends(get_current_user),
-    chat_service: ChatService = Depends(get_chat_service)
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     """Check if a direct chat exists between the current user and the participant.
     Returns { chat_id: string | None } without exposing other details.
     """
     try:
         chat = await chat_service.get_chat_between(current_user.id, participant_id)
-        return { "chat_id": str(chat.id) if chat else None }
+        return {"chat_id": str(chat.id) if chat else None}
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to check chat: {str(e)}"
+            detail=f"Failed to check chat: {str(e)}",
         )
 
 
@@ -136,7 +145,7 @@ async def get_chat_with_participant(
 async def batch_check_chats_with_participants(
     participant_ids: List[UUID],
     current_user: CurrentUser = Depends(get_current_user),
-    chat_service: ChatService = Depends(get_chat_service)
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     """Check if direct chats exist between the current user and multiple participants.
     Returns { participant_id: chat_id | None } for each participant.
@@ -145,17 +154,21 @@ async def batch_check_chats_with_participants(
         result = {}
         for participant_id in participant_ids:
             try:
-                chat = await chat_service.get_chat_between(current_user.id, participant_id)
+                chat = await chat_service.get_chat_between(
+                    current_user.id, participant_id
+                )
                 result[str(participant_id)] = str(chat.id) if chat else None
             except Exception as e:
-                logger.error(f"Error checking chat with participant {participant_id}: {e}")
+                logger.error(
+                    f"Error checking chat with participant {participant_id}: {e}"
+                )
                 result[str(participant_id)] = None
         return result
     except Exception as e:
         logger.error(f"Error in batch chat check: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to batch check chats: {str(e)}"
+            detail=f"Failed to batch check chats: {str(e)}",
         )
 
 
@@ -165,17 +178,19 @@ async def get_chat_messages(
     limit: int = 50,
     offset: int = 0,
     current_user: CurrentUser = Depends(get_current_user),
-    chat_service: ChatService = Depends(get_chat_service)
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     """Get messages for a specific chat"""
     try:
-        return await chat_service.get_chat_messages(chat_id, current_user.id, limit, offset)
+        return await chat_service.get_chat_messages(
+            chat_id, current_user.id, limit, offset
+        )
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get messages: {str(e)}"
+            detail=f"Failed to get messages: {str(e)}",
         )
 
 
@@ -184,28 +199,30 @@ async def mark_messages_read(
     chat_id: UUID,
     request: ChatMarkReadRequest,
     current_user: CurrentUser = Depends(get_current_user),
-    chat_service: ChatService = Depends(get_chat_service)
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     """Mark messages as read"""
     try:
-        result = await chat_service.mark_messages_read(chat_id, current_user.id, request)
-        
+        result = await chat_service.mark_messages_read(
+            chat_id, current_user.id, request
+        )
+
         # Broadcast read receipt to WebSocket subscribers
         read_receipt = WebSocketReadReceipt(
             chat_id=chat_id,
             message_ids=request.message_ids,
             read_by=current_user.id,
-            read_at=result["read_at"]
+            read_at=result["read_at"],
         )
         await websocket_manager.broadcast_read_receipt(chat_id, read_receipt)
-        
+
         return result
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to mark messages as read: {str(e)}"
+            detail=f"Failed to mark messages as read: {str(e)}",
         )
 
 
@@ -213,33 +230,33 @@ async def mark_messages_read(
 async def websocket_endpoint(
     websocket: WebSocket,
     chat_id: UUID,
-    chat_service: ChatService = Depends(get_chat_service)
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     """WebSocket endpoint for real-time chat communication"""
     await websocket.accept()
-    
+
     try:
         # Subscribe to chat updates
         await websocket_manager.connect(websocket, chat_id)
-        
+
         # Send connection confirmation
         await websocket.send_text("Connected to chat")
-        
+
         # Keep connection alive and handle incoming messages
         while True:
             try:
                 # Wait for messages from client
                 _ = await websocket.receive_text()
-                
+
                 # Handle incoming WebSocket messages if needed
                 # For now, just keep connection alive
-                
+
             except WebSocketDisconnect:
                 break
             except Exception as e:
                 print(f"WebSocket error: {str(e)}")
                 break
-                
+
     except Exception as e:
         print(f"WebSocket connection error: {str(e)}")
     finally:
