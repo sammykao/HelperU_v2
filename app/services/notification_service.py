@@ -51,6 +51,33 @@ class NotificationService:
             filtered_ids = [id for id in participant_user_ids if id != str(sender_id)]
             
             expo_push_tokens = set()
+            # response = (
+            #     self.admin_client
+            #     .table("helpers")
+            #     .select("id, push_notification_token")
+            #     .in_("id", filtered_ids)
+            #     .execute()
+            # )
+            #
+            # payload = []
+            # if response.data:
+            #     print(response.data)
+            #     for token_data in response.data: 
+            #         if token_data.push_notification_token in expo_push_tokens: 
+            #             continue;
+            #
+            #         payload.append(PushMessage(
+            #             to=token_data.push_notification_token,
+            #             title="New Message",
+            #             body=message,sound="default")
+            #         )
+            #
+            #         payload.append({ "to": token_data.push_notification_token, "title": "New Message", "message": message })
+            #         expo_push_tokens.add(token_data.push_notification_token)
+            #
+            # response = PushClient().publish_multiple(payload)
+            # print(response)
+
             response = (
                 self.admin_client
                 .table("helpers")
@@ -62,18 +89,26 @@ class NotificationService:
             payload = []
             if response.data:
                 print(response.data)
-                for token_data in response.data: 
-                    if token_data.push_notification_token in expo_push_tokens: 
-                        continue;
+                for token_data in response.data:
+                    tokens = token_data["push_notification_token"] or []
+                    for token in tokens:
+                        if token in expo_push_tokens:
+                            continue
 
-                    payload.append(PushMessage(
-                        to=token_data.push_notification_token,
-                        title="New Message",
-                        body=message,sound="default")
-                    )
+                        payload.append(PushMessage(
+                            to=token,
+                            title="New Message",
+                            body=message,
+                            sound="default"
+                        ))
 
-                    payload.append({ "to": token_data.push_notification_token, "title": "New Message", "message": message })
-                    expo_push_tokens.add(token_data.push_notification_token)
+                        payload.append({
+                            "to": token,
+                            "title": "New Message",
+                            "message": message
+                        })
+
+                        expo_push_tokens.add(token)
 
             response = PushClient().publish_multiple(payload)
             print(response)
