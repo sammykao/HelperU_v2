@@ -61,6 +61,7 @@ class NotificationService:
 
             payload = []
             if response.data:
+                print(response.data)
                 for token_data in response.data: 
                     if token_data.push_notification_token in expo_push_tokens: 
                         continue;
