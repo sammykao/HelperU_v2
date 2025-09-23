@@ -48,6 +48,8 @@ class NotificationService:
                 .execute()
             )
 
+            print(f"what is expo token result {response}")
+
             payload = []
             if response.data:
                 print(response.data)
@@ -62,6 +64,8 @@ class NotificationService:
                         )
 
                         expo_push_tokens.add(token)
+
+            print(f"Payload: {payload}")
 
             async with AsyncClient(http2=True) as client:
                 headers = {

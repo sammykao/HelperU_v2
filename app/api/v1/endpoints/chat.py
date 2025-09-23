@@ -110,6 +110,8 @@ async def send_message(
             chat_id, current_user.id, message.content
         )
 
+        print("after notification")
+
         return message
     except HTTPException:
         raise
