@@ -8,6 +8,7 @@ import asyncio
 
 from app.core.config import settings
 
+
 class NotificationService:
     """Service for handling chat and messaging operations"""
 
@@ -16,8 +17,7 @@ class NotificationService:
         self.url = "https://api.push.apple.com"
 
     def _get_private_key(self):
-        with open(settings.PUSH_TOKEN_SECRET, "r") as f:
-            return f.read()
+        return settings.PUSH_TOKEN_SECRET
 
     def _create_auth_token(self):
         return jwt.encode(
