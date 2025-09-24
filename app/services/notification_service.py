@@ -17,7 +17,7 @@ class NotificationService:
         self.url = "https://api.push.apple.com"
 
     def _get_private_key(self):
-        return settings.PUSH_TOKEN_SECRET
+        return settings.PUSH_TOKEN_SECRET.replace("\\n", "\n")
 
     def _create_auth_token(self):
         return jwt.encode(
