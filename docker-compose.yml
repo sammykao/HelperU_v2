@@ -27,6 +27,7 @@ services:
       # Apple Bundle IDs 
       - HELPER_MOBILE_APP_BUNDLE_ID=${HELPER_MOBILE_APP_BUNDLE_ID}
       - HELPER_PUSH_NOTIFICATION_P8_ID=${HELPER_PUSH_NOTIFICATION_P8_ID}
+      - PUSH_TOKEN_SECRET=${PUSH_TOKEN_SECRET}
       
       # Environment
       - ENVIRONMENT=production

@@ -5,12 +5,8 @@ from httpx import AsyncClient
 import jwt
 import time
 import asyncio
-from pathlib import Path
+
 from app.core.config import settings
-
-current_file = Path(__file__).resolve()
-project_root = current_file.parent.parent.parent
-
 
 class NotificationService:
     """Service for handling chat and messaging operations"""
@@ -20,8 +16,7 @@ class NotificationService:
         self.url = "https://api.push.apple.com"
 
     def _get_private_key(self):
-        key_path = project_root / "PushTokenSecret.p8"
-        with open(key_path, "r") as f:
+        with open(settings.PUSH_TOKEN_SECRET, "r") as f:
             return f.read()
 
     def _create_auth_token(self):
