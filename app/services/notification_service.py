@@ -2,6 +2,11 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from supabase import Client
 from httpx import AsyncClient
+import jwt
+import time
+import asyncio
+
+from app.core.config import settings
 
 
 class NotificationService:
@@ -9,6 +14,35 @@ class NotificationService:
 
     def __init__(self, admin_client: Client):
         self.admin_client = admin_client
+        self.url = "https://api.push.apple.com"
+
+    def _get_private_key(self):
+        with open("../../PushTokenSecret.p8", "r") as f:
+            return f.read()
+
+    def _create_auth_token(self):
+        return jwt.encode(
+            {
+                "iss": settings.HELPER_MOBILE_APP_BUNDLE_ID,
+                "iat": int(time.time()),
+            },
+            self._get_private_key(),
+            algorithm="ES256",
+            headers={"alg": "ES256", "kid": settings.HELPER_PUSH_NOTIFICATION_P8_ID},
+        )
+
+    async def _send_apns_notification(self, msg):
+        async with AsyncClient(http2=True) as client:
+            response = await client.post(
+                f"{self.url}/3/device/{msg.device_token}",
+                headers=msg.headers,
+                json=msg.payload,
+            )
+            return {
+                "device_token": msg.device_token,
+                "status": response.status_code,
+                "body": response.text,
+            }
 
     async def send_msg_notification(self, chat_id: UUID, sender_id: str, message: str):
         try:
@@ -38,48 +72,73 @@ class NotificationService:
                     status_code=status.HTTP_403_FORBIDDEN, detail="Sender not in chat"
                 )
 
-            filtered_ids = [id for id in participant_user_ids if id != str(sender_id)]
-            expo_push_tokens = set()
+            # filtered_ids = [id for id in participant_user_ids if id != str(sender_id)]
+            # native_push_tokens = set()
+            #
+            # response = (
+            #     self.admin_client.table("helpers")
+            #     .select("id, push_notification_token")
+            #     .in_("id", filtered_ids)
+            #     .execute()
+            # )
 
-            response = (
-                self.admin_client.table("helpers")
-                .select("id, push_notification_token")
-                .in_("id", filtered_ids)
-                .execute()
+            headers = {
+                "authorization": f"bearer {self._create_auth_token()}",
+                "apns-topic": settings.HELPER_MOBILE_APP_BUNDLE_ID,
+            }
+            payload = {
+                "aps": {
+                    "alert": {
+                        "title": "New Message",
+                        "body": message,
+                    }
+                }
+            }
+
+            result = await self._send_apns_notification(
+                {
+                    "headers": headers,
+                    "payload": payload,
+                    "device_token": "63ad5950480e411ba03cea6e55f56667b93af214f5f234d2aa6ad35678bbeb1c",
+                }
             )
 
-            print(f"what is expo token result {response}")
+            print(result)
 
-            payload = []
-            if response.data:
-                print(response.data)
-                for token_data in response.data:
-                    tokens = token_data["push_notification_token"] or []
-                    for token in tokens:
-                        if token in expo_push_tokens:
-                            continue
+            # msgs = []
+            # if response.data:
+            #     print(response.data)
+            #     for token_data in response.data:
+            #         tokens = token_data["push_notification_token"] or []
+            #         for token in tokens:
+            #             headers = {
+            #                 "authorization": f"bearer {self._create_auth_token()}",
+            #                 "apns-topic": settings.HELPER_MOBILE_APP_BUNDLE_ID,
+            #             }
+            #             payload = {
+            #                 "aps": {
+            #                     "alert": {
+            #                         "title": "New Message",
+            #                         "body": message,
+            #                     }
+            #                 }
+            #             }
+            #             if token in native_push_tokens:
+            #                 continue
+            #
+            #             msgs.append(
+            #                 {
+            #                     "headers": headers,
+            #                     "payload": payload,
+            #                     "device_token": "63ad5950480e411ba03cea6e55f56667b93af214f5f234d2aa6ad35678bbeb1c",
+            #                 }
+            #             )
+            #             native_push_tokens.add(token)
 
-                        payload.append(
-                            {"to": token, "title": "New Message", "body": message}
-                        )
+            # tasks = [self._send_apns_notification(msg) for msg in msgs]
+            # results = await asyncio.gather(*tasks, return_exceptions=True)
 
-                        expo_push_tokens.add(token)
-
-            print(f"Payload: {payload}")
-
-            async with AsyncClient(http2=True) as client:
-                headers = {
-                    "host": "exp.host",
-                    "accept": "application/json",
-                    "accept-encoding": "gzip, deflate",
-                    "content-type": "application/json",
-                }
-                response = await client.post(
-                    "https://exp.host/--/api/v2/push/send",
-                    headers=headers,
-                    json=payload,
-                )
-                print(response)
+            # print(results)
 
         except HTTPException:
             raise

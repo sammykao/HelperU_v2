@@ -23,6 +23,10 @@ services:
       
       # AI Configuration
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+      # Apple Bundle IDs 
+      - HELPER_MOBILE_APP_BUNDLE_ID=${HELPER_MOBILE_APP_BUNDLE_ID}
+      - HELPER_PUSH_NOTIFICATION_P8_ID=${HELPER_PUSH_NOTIFICATION_P8_ID}
       
       # Environment
       - ENVIRONMENT=production

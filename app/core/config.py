@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     SMTP_SERVER: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
 
+    # Apple app bundle information
+    HELPER_MOBILE_APP_BUNDLE_ID: str
+    HELPER_PUSH_NOTIFICATION_P8_ID: str
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
 
