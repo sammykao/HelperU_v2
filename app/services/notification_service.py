@@ -31,15 +31,15 @@ class NotificationService:
             headers={"alg": "ES256", "kid": settings.HELPER_PUSH_NOTIFICATION_P8_ID},
         )
 
-    async def _send_apns_notification(self, msg):
+    async def _send_apns_notification(self, msg: dict):
         async with AsyncClient(http2=True) as client:
             response = await client.post(
-                f"{self.url}/3/device/{msg.device_token}",
-                headers=msg.headers,
-                json=msg.payload,
+                f"{self.url}/3/device/{msg['device_token']}",
+                headers=msg["headers"],
+                json=msg["payload"],
             )
             return {
-                "device_token": msg.device_token,
+                "device_token": msg["device_token"],
                 "status": response.status_code,
                 "body": response.text,
             }
@@ -105,7 +105,6 @@ class NotificationService:
             )
 
             print(result)
-            print()
 
             # msgs = []
             # if response.data:
