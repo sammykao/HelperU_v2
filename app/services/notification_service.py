@@ -15,7 +15,7 @@ class NotificationService:
 
     def __init__(self, admin_client: Client):
         self.admin_client = admin_client
-        self.url = "https://api.push.apple.com"
+        self.url = "https://api.sandbox.push.apple.com"
 
     def _get_private_key(self):
         return settings.PUSH_TOKEN_SECRET.replace("\\n", "\n")
