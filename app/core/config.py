@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     HELPER_MOBILE_APP_BUNDLE_ID: str
     HELPER_PUSH_NOTIFICATION_P8_ID: str
     PUSH_TOKEN_SECRET: str
+    APPLE_ID: str
 
     model_config = SettingsConfigDict(
         env_file=".env", case_sensitive=False, extra="ignore"

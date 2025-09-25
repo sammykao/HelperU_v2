@@ -23,7 +23,7 @@ class NotificationService:
     def _create_auth_token(self):
         return jwt.encode(
             {
-                "iss": settings.HELPER_MOBILE_APP_BUNDLE_ID,
+                "iss": settings.APPLE_ID,
                 "iat": int(time.time()),
             },
             self._get_private_key(),
@@ -46,7 +46,6 @@ class NotificationService:
 
     async def send_msg_notification(self, chat_id: UUID, sender_id: str, message: str):
         try:
-
 
             # cu_result = (
             #     self.admin_client.table("chat_users")
