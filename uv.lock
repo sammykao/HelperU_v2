@@ -42,15 +42,6 @@ wheels = [
 ]
 
 [[package]]
-name = "apns2"
-version = "0.1.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "hyper" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/86/5a/75b7e935d6f20dcad871162c8504b0f967a864517762d76b328a80ed9b77/apns2-0.1.3.tar.gz", hash = "sha256:24167f486a89d8303015613e104bac03e2a3d7154d213c12f75d3d404727837a", size = 3120, upload-time = "2016-12-24T22:37:35.864Z" }
-
-[[package]]
 name = "certifi"
 version = "2025.8.3"
 source = { registry = "https://pypi.org/simple" }
@@ -441,7 +432,6 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiosqlite" },
-    { name = "apns2" },
     { name = "cryptography" },
     { name = "exponent-server-sdk" },
     { name = "fastapi" },
@@ -473,7 +463,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiosqlite", specifier = ">=0.20.0" },
-    { name = "apns2", specifier = ">=0.1.3" },
     { name = "cryptography", specifier = ">=46.0.1" },
     { name = "exponent-server-sdk", specifier = ">=2.2.0" },
     { name = "fastapi", specifier = "==0.111.0" },
@@ -572,15 +561,6 @@ wheels = [
 [package.optional-dependencies]
 http2 = [
     { name = "h2" },
-]
-
-[[package]]
-name = "hyper"
-version = "0.5.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0d/f0/f2d16d5dcfa618dc365a1381f2262e71fff8ebc052fd2ae68a0a471e0866/hyper-0.5.0.tar.gz", hash = "sha256:034b6ad6d0ba2dafa948e5d893337ffa376ececa5725f7cc59f9319a11b0b3f3", size = 255589, upload-time = "2015-10-11T16:17:21.619Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c2/c7/c4daef9df60574844eb5c0280aca803baf646b65b8417513415dcbcb2ba1/hyper-0.5.0-py2.py3-none-any.whl", hash = "sha256:5b75427b2c0cc6cdf216e70ff1dc331014040444ee522daa6e5001fc0942716a", size = 267826, upload-time = "2015-10-11T16:17:30.167Z" },
 ]
 
 [[package]]
