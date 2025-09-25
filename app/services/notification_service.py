@@ -105,6 +105,7 @@ class NotificationService:
             )
 
             print(result)
+            print()
 
             # msgs = []
             # if response.data:
