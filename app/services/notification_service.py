@@ -100,7 +100,7 @@ class NotificationService:
                 {
                     "headers": headers,
                     "payload": payload,
-                    "device_token": "5812c06c8c14be0d358bfc1c3d4550a6d5e8d99c586992e0429a97794c2dc92f",
+                    "device_token": "a1274493a06ae73c3734a493725ccb20d7813dfd57ff237008caf87d056c1047",
                 }
             )
 
