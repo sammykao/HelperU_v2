@@ -6,6 +6,7 @@ import jwt
 import time
 import asyncio
 
+
 from app.core.config import settings
 
 
@@ -45,32 +46,34 @@ class NotificationService:
 
     async def send_msg_notification(self, chat_id: UUID, sender_id: str, message: str):
         try:
-            cu_result = (
-                self.admin_client.table("chat_users")
-                .select("id,user_id")
-                .eq("chat_id", str(chat_id))
-                .execute()
-            )
-            if not cu_result.data:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"
-                )
-            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
-            if UUID(str(sender_id)) not in participant_user_ids:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Access denied to this chat",
-                )
-            sender_chat_user_id = None
-            for row in cu_result.data:
-                if row["user_id"] == str(sender_id):
-                    sender_chat_user_id = row["id"]
-                    break
-            if sender_chat_user_id is None:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="Sender not in chat"
-                )
 
+
+            # cu_result = (
+            #     self.admin_client.table("chat_users")
+            #     .select("id,user_id")
+            #     .eq("chat_id", str(chat_id))
+            #     .execute()
+            # )
+            # if not cu_result.data:
+            #     raise HTTPException(
+            #         status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"
+            #     )
+            # participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
+            # if UUID(str(sender_id)) not in participant_user_ids:
+            #     raise HTTPException(
+            #         status_code=status.HTTP_403_FORBIDDEN,
+            #         detail="Access denied to this chat",
+            #     )
+            # sender_chat_user_id = None
+            # for row in cu_result.data:
+            #     if row["user_id"] == str(sender_id):
+            #         sender_chat_user_id = row["id"]
+            #         break
+            # if sender_chat_user_id is None:
+            #     raise HTTPException(
+            #         status_code=status.HTTP_403_FORBIDDEN, detail="Sender not in chat"
+            #     )
+            #
             # filtered_ids = [id for id in participant_user_ids if id != str(sender_id)]
             # native_push_tokens = set()
             #
@@ -98,7 +101,7 @@ class NotificationService:
                 {
                     "headers": headers,
                     "payload": payload,
-                    "device_token": "63ad5950480e411ba03cea6e55f56667b93af214f5f234d2aa6ad35678bbeb1c",
+                    "device_token": "5812c06c8c14be0d358bfc1c3d4550a6d5e8d99c586992e0429a97794c2dc92f",
                 }
             )
 
