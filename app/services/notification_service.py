@@ -47,99 +47,77 @@ class NotificationService:
     async def send_msg_notification(self, chat_id: UUID, sender_id: str, message: str):
         try:
 
-            # cu_result = (
-            #     self.admin_client.table("chat_users")
-            #     .select("id,user_id")
-            #     .eq("chat_id", str(chat_id))
-            #     .execute()
-            # )
-            # if not cu_result.data:
-            #     raise HTTPException(
-            #         status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"
-            #     )
-            # participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
-            # if UUID(str(sender_id)) not in participant_user_ids:
-            #     raise HTTPException(
-            #         status_code=status.HTTP_403_FORBIDDEN,
-            #         detail="Access denied to this chat",
-            #     )
-            # sender_chat_user_id = None
-            # for row in cu_result.data:
-            #     if row["user_id"] == str(sender_id):
-            #         sender_chat_user_id = row["id"]
-            #         break
-            # if sender_chat_user_id is None:
-            #     raise HTTPException(
-            #         status_code=status.HTTP_403_FORBIDDEN, detail="Sender not in chat"
-            #     )
-            #
-            # filtered_ids = [id for id in participant_user_ids if id != str(sender_id)]
-            # native_push_tokens = set()
-            #
-            # response = (
-            #     self.admin_client.table("helpers")
-            #     .select("id, push_notification_token")
-            #     .in_("id", filtered_ids)
-            #     .execute()
-            # )
-
-            headers = {
-                "authorization": f"bearer {self._create_auth_token()}",
-                "apns-topic": settings.HELPER_MOBILE_APP_BUNDLE_ID,
-            }
-            payload = {
-                "aps": {
-                    "alert": {
-                        "title": "New Message",
-                        "body": message,
-                    }
-                }
-            }
-
-            result = await self._send_apns_notification(
-                {
-                    "headers": headers,
-                    "payload": payload,
-                    "device_token": "a1274493a06ae73c3734a493725ccb20d7813dfd57ff237008caf87d056c1047",
-                }
+            cu_result = (
+                self.admin_client.table("chat_users")
+                .select("id,user_id")
+                .eq("chat_id", str(chat_id))
+                .execute()
             )
+            if not cu_result.data:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"
+                )
+            participant_user_ids = [UUID(row["user_id"]) for row in cu_result.data]
+            if UUID(str(sender_id)) not in participant_user_ids:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied to this chat",
+                )
+            sender_chat_user_id = None
+            for row in cu_result.data:
+                if row["user_id"] == str(sender_id):
+                    sender_chat_user_id = row["id"]
+                    break
+            if sender_chat_user_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Sender not in chat"
+                )
 
-            print(result)
+            filtered_ids = [id for id in participant_user_ids if id != str(sender_id)]
+            native_push_tokens = set()
 
-            # msgs = []
-            # if response.data:
-            #     print(response.data)
-            #     for token_data in response.data:
-            #         tokens = token_data["push_notification_token"] or []
-            #         for token in tokens:
-            #             headers = {
-            #                 "authorization": f"bearer {self._create_auth_token()}",
-            #                 "apns-topic": settings.HELPER_MOBILE_APP_BUNDLE_ID,
-            #             }
-            #             payload = {
-            #                 "aps": {
-            #                     "alert": {
-            #                         "title": "New Message",
-            #                         "body": message,
-            #                     }
-            #                 }
-            #             }
-            #             if token in native_push_tokens:
-            #                 continue
-            #
-            #             msgs.append(
-            #                 {
-            #                     "headers": headers,
-            #                     "payload": payload,
-            #                     "device_token": "63ad5950480e411ba03cea6e55f56667b93af214f5f234d2aa6ad35678bbeb1c",
-            #                 }
-            #             )
-            #             native_push_tokens.add(token)
+            response = (
+                self.admin_client.table("helpers")
+                .select("id, push_notification_token")
+                .in_("id", filtered_ids)
+                .execute()
+            )
+            print(response)
 
-            # tasks = [self._send_apns_notification(msg) for msg in msgs]
-            # results = await asyncio.gather(*tasks, return_exceptions=True)
+            msgs = []
+            if response.data:
+                print(response.data)
+                for token_data in response.data:
+                    tokens = token_data["push_notification_token"] or []
+                    for token in tokens:
+                        headers = {
+                            "authorization": f"bearer {self._create_auth_token()}",
+                            "apns-topic": settings.HELPER_MOBILE_APP_BUNDLE_ID,
+                        }
+                        payload = {
+                            "aps": {
+                                "alert": {
+                                    "title": "New Message",
+                                    "body": message,
+                                }
+                            }
+                        }
+                        if token in native_push_tokens:
+                            continue
 
-            # print(results)
+                        msgs.append(
+                            {
+                                "headers": headers,
+                                "payload": payload,
+                                "device_token": token,
+                            }
+                        )
+                        native_push_tokens.add(token)
+
+            tasks = [self._send_apns_notification(msg) for msg in msgs]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            print(results)
 
         except HTTPException:
             raise
