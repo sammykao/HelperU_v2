@@ -65,6 +65,37 @@ async def create_checkout_session(
         )
 
 
+@router.post("/create-portal-session")
+async def create_portal_session(
+    current_user: CurrentUser = Depends(get_current_user),
+    stripe_service: StripeService = Depends(get_stripe_service)
+):
+    """Create a Stripe customer portal session for subscription management"""
+    try:
+        user_id = current_user.id
+        
+        # Check if user has an active paid subscription
+        subscription_status = await stripe_service.get_subscription_status(user_id)
+        
+        if subscription_status.plan == "free":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No active paid subscription to manage"
+            )
+        
+        # Create portal session
+        portal_url = await stripe_service.create_portal_session(user_id)
+        
+        return {"portal_url": portal_url}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create portal session: {str(e)}"
+        )
+
+
 @router.post("/webhook")
 async def stripe_webhook(
     request: Request,

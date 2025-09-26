@@ -140,6 +140,30 @@ class StripeService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to create subscription: {str(e)}")
     
+    async def create_portal_session(self, user_id: str) -> str:
+        """Create a Stripe customer portal session for subscription management"""
+        try:
+            # Get user's Stripe customer ID
+            result = self.admin_client.table("subscriptions").select("stripe_customer_id").eq("user_id", user_id).execute()
+            
+            if not result.data or not result.data[0]["stripe_customer_id"]:
+                raise HTTPException(status_code=404, detail="No Stripe customer found")
+            
+            customer_id = result.data[0]["stripe_customer_id"]
+            
+            # Create portal session
+            portal_session = stripe.billing_portal.Session.create(
+                customer=customer_id,
+                return_url=f'{settings.FRONTEND_URL}/subscription/upgrade',
+            )
+            
+            return portal_session.url
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to create portal session: {str(e)}")
+    
     async def cancel_subscription(self, user_id: str) -> bool:
         """Cancel a user's subscription"""
         try:
@@ -243,7 +267,6 @@ class StripeService:
                 "data": event.data.object
             }).execute()
             
-            print(event.type, event.data.object)
             # Handle specific events
             if event.type == "checkout.session.completed":
                 await self._handle_checkout_completed(event.data.object)
@@ -251,7 +274,7 @@ class StripeService:
                 await self._handle_subscription_created(event.data.object)
             elif event.type == "customer.subscription.updated":
                 await self._handle_subscription_updated(event.data.object)
-            elif event.type == "customer.subscription.deleted":
+            elif event.type == "customer.subscription.updated" and event.data.object.cancel_at_period_end:
                 await self._handle_subscription_deleted(event.data.object)
             elif event.type == "invoice.payment_succeeded":
                 await self._handle_payment_succeeded(event.data.object)
@@ -290,7 +313,7 @@ class StripeService:
         try:
             # Update subscription status in Supabase
             self.admin_client.table("subscriptions").update({
-                "status": "canceled"
+                "plan": "free"
             }).eq("stripe_subscription_id", subscription_data.id).execute()
         except Exception as e:
             print(f"Failed to handle subscription deletion: {str(e)}")

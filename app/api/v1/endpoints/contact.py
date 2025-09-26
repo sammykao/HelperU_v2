@@ -23,6 +23,7 @@ class ContactResponse(BaseModel):
     success: bool
     message: str
 
+
 emailer = EmailUtils()
 
 @router.post("/contact", response_model=ContactResponse)
