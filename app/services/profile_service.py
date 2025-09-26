@@ -198,42 +198,44 @@ class ProfileService:
             )
 
     async def register_device(self, user_id: str, expo_token: str):
+
         try:
             client_result = (
                 self.admin_client.table("clients")
-                .select("id, push_notification_tokens")
+                .select("*")
                 .eq("id", user_id)
                 .execute()
             )
 
-            if client_result.data:
-                tokens = client_result.data[0].get("push_notification_tokens") or []
+            if not client_result.count and client_result.data:
+                tokens = client_result.data[0].get("push_notification_token") or []
                 if expo_token not in tokens:
                     updated_tokens = tokens + [expo_token]
                     self.admin_client.table("clients").update(
-                        {"push_notification_tokens": updated_tokens}
+                        {"push_notification_token": updated_tokens}
                     ).eq("id", user_id).execute()
                 return
 
             helper_result = (
                 self.admin_client.table("helpers")
-                .select("id, push_notification_tokens")
+                .select("id, push_notification_token")
                 .eq("id", user_id)
                 .execute()
             )
 
             if helper_result.data:
-                tokens = helper_result.data[0].get("push_notification_tokens") or []
+                tokens = helper_result.data[0].get("push_notification_token") or []
                 if expo_token not in tokens:
                     updated_tokens = tokens + [expo_token]
                     self.admin_client.table("helpers").update(
-                        {"push_notification_tokens": updated_tokens}
+                        {"push_notification_token": updated_tokens}
                     ).eq("id", user_id).execute()
                 return
 
             # if user not found in either table
             raise HTTPException(
-                status_code=404, detail=f"User {user_id} not found in clients or helpers"
+                status_code=404,
+                detail=f"User {user_id} not found in clients or helpers",
             )
         except Exception as exc:
             raise HTTPException(
