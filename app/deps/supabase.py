@@ -10,7 +10,6 @@ from app.services.auth_service import AuthService
 from app.services.helper_service import HelperService
 from app.services.application_service import ApplicationService
 from app.services.chat_service import ChatService
-from app.services.openphone_service import OpenPhoneService
 from app.services.notification_service import NotificationService
 from app.schemas.auth import CurrentUser
 
@@ -112,13 +111,10 @@ def get_application_service() -> ApplicationService:
 def get_chat_service() -> ChatService:
     """Dependency to get chat service with Supabase admin client"""
     admin_client = get_supabase_admin()
-    openphone_service = get_openphone_service()
-    return ChatService(admin_client, openphone_service)
+    return ChatService(admin_client)
 
 
-def get_openphone_service() -> OpenPhoneService:
-    """Dependency to get OpenPhone service for SMS notifications"""
-    return OpenPhoneService()
+
 
 def get_notifications_service() -> NotificationService:
     admin_client = get_supabase_admin()

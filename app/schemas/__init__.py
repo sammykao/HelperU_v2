@@ -88,7 +88,7 @@ from .chat import (
     WebSocketReadReceipt
 )
 
-from .openphone import (
+from .sms import (
     OpenPhoneMessageRequest,
     OpenPhoneMessageResponse,
     OpenPhoneErrorResponse,
@@ -103,7 +103,8 @@ from .openphone import (
     VerificationCodeNotification,
     WelcomeMessageNotification,
     BulkNotificationRequest,
-    BulkNotificationResponse
+    BulkNotificationResponse,
+    InvitationNotification
 )
 
 from .ai import (
@@ -208,7 +209,7 @@ __all__ = [
     "WelcomeMessageNotification",
     "BulkNotificationRequest",
     "BulkNotificationResponse",
-    
+    "InvitationNotification",
     # AI schemas
     "AIRequest",
     "AIResponse",

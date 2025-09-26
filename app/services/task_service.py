@@ -14,9 +14,13 @@ from app.schemas.task import (
     PublicTask,
     PublicTaskResponse,
     ClientInfo,
-)
-from app.services.stripe_service import StripeService
 
+)
+from app.schemas.sms import TaskCreationNotification
+from app.services.stripe_service import StripeService
+from app.utils.emailer import EmailUtils
+from app.utils.sms import SMSUtils
+from app.core.config import settings
 
 class TaskService:
     """Service for handling task operations and business logic"""
@@ -26,6 +30,8 @@ class TaskService:
     def __init__(self, admin_client: Client, stripe_service: StripeService):
         self.admin_client = admin_client
         self.stripe_service = stripe_service
+        self.emailer = EmailUtils()
+        self.smser = SMSUtils()
 
     async def create_task(self, client_id: str, request: TaskCreate) -> TaskResponse:
         """Create a new task with validation"""
@@ -57,6 +63,9 @@ class TaskService:
             # Update client's post count (fire and forget) monthly and total
             asyncio.create_task(self.stripe_service.update_monthly_post_count(client_id))
             asyncio.create_task(self.update_client_post_count(client_id))
+            asyncio.create_task(self.emailer.send_task_notification_email(client.data[0]["email"], client.data[0]["first_name"], result.data[0]["title"], "task_created", result.data[0]["description"]))
+            asyncio.create_task(self.emailer.send_task_notification_email(settings.EMAIL_SENDER, client.data[0]["first_name"], result.data[0]["title"], "task_created", result.data[0]["description"]))
+            asyncio.create_task(self.smser.send_task_creation_notification(TaskCreationNotification(task_id=result.data[0]["id"], client_phone=client.data[0]["phone"], task_title=result.data[0]["title"], task_description=result.data[0]["description"])))
             # Return the created task
             created_task = result.data[0]
             return TaskResponse(**created_task)

@@ -6,12 +6,14 @@ from app.schemas.applications import (
     ApplicationListResponse
 )
 from app.schemas.helper import HelperResponse
+from app.schemas.sms import ApplicationReceivedNotification, InvitationNotification
 from app.schemas.invitations import InvitationResponse, InvitationListResponse
 from app.services.task_service import TaskService, TaskResponse
 from app.services.helper_service import HelperService
 from fastapi import HTTPException, status
 from typing import List
 import asyncio
+from app.utils.sms import SMSUtils
 
 
 class ApplicationService:
@@ -19,6 +21,7 @@ class ApplicationService:
         self.admin_client = admin_client
         self.task_service = task_service
         self.helper_service = helper_service
+        self.smser = SMSUtils()
 
 
     async def get_applications_by_task(self, user_id: str, task_id: str) -> ApplicationListResponse:
@@ -109,19 +112,18 @@ class ApplicationService:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You have already applied to this task")
             
             # Create the application with helper_id from authenticated user
-            application_data = {
+            application = self.admin_client.table("applications").insert({
                 "task_id": application_create_request.task_id,
                 "helper_id": helper_id,
                 "introduction_message": application_create_request.introduction_message,
                 "supplements_url": application_create_request.supplements_url
-            }
-            application = self.admin_client.table("applications").insert(application_data).execute()
+            }).execute()
             if not application.data:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create application")
             
             # Update helper's application count (fire and forget)
             asyncio.create_task(self.update_helper_application_count(helper_id))
-            
+            asyncio.create_task(self.send_application_received_notification(client_id=task.client_id, helper_name=helper.first_name + " " + helper.last_name, task_title=task.title))
             # Return the application    
             return ApplicationResponse(
                 application=ApplicationInfo(**application.data[0]),
@@ -179,7 +181,7 @@ class ApplicationService:
             invitations_result = self.admin_client.table("invitations").select("*, helpers:helper_id(*)").eq("task_id", task_id).execute()
             if not invitations_result.data:
                 return InvitationListResponse(invitations=[], total_count=0)
-            
+
             invitations = [InvitationResponse(**invitation) for invitation in invitations_result.data]
             return InvitationListResponse(invitations=invitations, total_count=len(invitations))
         except Exception as e:
@@ -229,10 +231,27 @@ class ApplicationService:
             if not invitation.data:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create invitation")
             
+            asyncio.create_task(self.send_invitation_notification(client_id=task.client_id, helper_id=helper_id, task_title=task.title))
             # Return the invitation
             return InvitationResponse(**invitation.data[0])
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+    async def send_application_received_notification(self, client_id: str, helper_name: str, task_title: str) -> None:
+        """Send application received notification"""
+        client = self.admin_client.table("clients").select("*").eq("id", client_id).execute()
+        if not client.data:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
+        await self.smser.send_application_received_notification(ApplicationReceivedNotification(client_phone=client.data[0]["phone"], helper_name=helper_name, task_title=task_title))
+    
+    async def send_invitation_notification(self, client_id: str, helper_id: str, task_title: str) -> None:
+        """Send invitation notification"""
+        #create a client helper join request
+        client = self.admin_client.table("clients").select("*").eq("id", client_id).execute()
+        helper = self.admin_client.table("helpers").select("*").eq("id", helper_id).execute()
+        if not client.data or not helper.data:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
+        await self.smser.send_invitation_notification(InvitationNotification(client_name=client.data[0]["first_name"] + " " + client.data[0]["last_name"], helper_phone=helper.data[0]["phone"], task_title=task_title))
 
 # from supabase import Client
 # from app.schemas.applications import (

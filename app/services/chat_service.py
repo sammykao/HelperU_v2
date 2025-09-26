@@ -14,16 +14,16 @@ from app.schemas.chat import (
     ChatWithParticipantsResponse,
     ChatParticipantInfo
 )
-from app.services.openphone_service import OpenPhoneService
-from app.schemas.openphone import MessageNotification
+from app.schemas.sms import MessageNotification
+from app.utils.sms import SMSUtils
 
 
 class ChatService:
     """Service for handling chat and messaging operations"""
 
-    def __init__(self, admin_client: Client, openphone_service: OpenPhoneService = None):
+    def __init__(self, admin_client: Client):
         self.admin_client = admin_client
-        self.openphone_service = openphone_service
+        self.smser = SMSUtils()
         
     async def create_chat(self, user_id: UUID, participant_id: UUID) -> ChatResponse:
         """Create a new chat between two users"""
@@ -205,27 +205,8 @@ class ChatService:
             self.admin_client.table("chats").update({"updated_at": datetime.utcnow().isoformat()}).eq("id", str(chat_id)).execute()
 
             # Send SMS notification to the other participant
-            if self.openphone_service:
-                try:
-                    # Get the other participant's ID
-                    other_participant_id = next(uid for uid in participant_user_ids if uid != sender_id)
-                    
-                    # Get participant info for the notification
-                    other_participant_info = await self._get_participant_info(str(other_participant_id))
-                    sender_info = await self._get_participant_info(str(sender_id))
-                    
-                    # Send SMS notification
-                    if other_participant_info.phone:
-                        notification = MessageNotification(
-                            recipient_phone=other_participant_info.phone,
-                            sender_name=f"{sender_info.first_name} {sender_info.last_name}",
-                            chat_id=str(chat_id),
-                            message_preview=request.content
-                        )
-                        await self.openphone_service.send_message_notification(notification)
-                except Exception as e:
-                    # Log error but don't fail the message send
-                    print(f"Failed to send SMS notification: {str(e)}")
+            if self.smser:
+                asyncio.create_task(self.send_message_notification(participant_user_ids, sender_id, chat_id, request))
 
             return MessageResponse(**message)
 
@@ -495,3 +476,23 @@ class ChatService:
                 "last_message_at": None,
                 "unread_count": 0
             }
+
+    async def send_message_notification(self, participant_user_ids: List[UUID], sender_id: UUID, chat_id: UUID, request: MessageCreateRequest) -> None:
+        """Send message notification"""
+            # Get the other participant's ID
+        other_participant_id = next(uid for uid in participant_user_ids if uid != sender_id)
+        
+        # Get participant info for the notification
+        other_participant_info = await self._get_participant_info(str(other_participant_id))
+        sender_info = await self._get_participant_info(str(sender_id))
+        
+        # Send SMS notification
+        if other_participant_info.phone:
+            notification = MessageNotification(
+                recipient_phone=other_participant_info.phone,
+                sender_name=f"{sender_info.first_name} {sender_info.last_name}",
+                chat_id=str(chat_id),
+                message_preview=request.content
+            )
+            self.smser.send_message_notification(notification)
+        

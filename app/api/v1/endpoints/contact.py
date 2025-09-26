@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 import logging
 
-from app.utils.emailer import send_contact_form_email
+from app.utils.emailer import EmailUtils
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ class ContactResponse(BaseModel):
     success: bool
     message: str
 
+emailer = EmailUtils()
 
 @router.post("/contact", response_model=ContactResponse)
 async def submit_contact_form(contact_data: ContactFormData):
@@ -31,14 +32,7 @@ async def submit_contact_form(contact_data: ContactFormData):
     """
     try:
         # Send contact form email
-        success = send_contact_form_email(
-            name=contact_data.name,
-            email=contact_data.email,
-            subject=contact_data.subject,
-            category=contact_data.category,
-            message=contact_data.message
-        )
-        
+        success = await emailer.send_contact_form_email(contact_data.name, contact_data.email, contact_data.subject, contact_data.category, contact_data.message)
         if success:
             logger.info(f"Contact form submitted successfully by {contact_data.email}")
             return ContactResponse(
@@ -46,7 +40,7 @@ async def submit_contact_form(contact_data: ContactFormData):
                 message="Thank you for your message! We'll get back to you within 4 hours."
             )
         else:
-            logger.error(f"Failed to send contact form email for {contact_data.email}")
+            logger.error(f"Failed to send contact form email for {contact_data.email}") 
             return ContactResponse(
                 success=False,
                 message="Sorry, there was an error sending your message. Please try again later."

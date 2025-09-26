@@ -52,7 +52,6 @@ class ApplicationReceivedNotification(BaseModel):
     client_phone: str = Field(..., description="Client's phone number")
     helper_name: str = Field(..., description="Name of the helper who applied")
     task_title: str = Field(..., description="Title of the task")
-    application_id: str = Field(..., description="Application ID")
 
 
 class ApplicationStatusNotification(BaseModel):
@@ -126,6 +125,12 @@ class OpenPhoneServiceHealth(BaseModel):
     last_check: datetime = Field(default_factory=datetime.utcnow, description="When the health check was performed")
     error_message: Optional[str] = Field(None, description="Error message if service is unhealthy")
 
+class InvitationNotification(BaseModel):
+    """Model for invitation SMS notification"""
+    helper_phone: str = Field(..., description="Helper's phone number")
+    client_name: str = Field(..., description="Name of the client")
+    task_title: str = Field(..., description="Title of the task")
+
 
 # Union type for all notification models
 NotificationRequest = (
@@ -136,5 +141,6 @@ NotificationRequest = (
     TaskCompletionNotification |
     PaymentReminderNotification |
     VerificationCodeNotification |
-    WelcomeMessageNotification
+    WelcomeMessageNotification |
+    InvitationNotification
 )
