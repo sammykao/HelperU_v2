@@ -34,8 +34,6 @@ class ProfileService:
                 .execute()
             )
 
-            print("helper")
-            print(helper_result)
 
             # Check if user exists in both tables (shared auth)
             if client_result.data and helper_result.data:

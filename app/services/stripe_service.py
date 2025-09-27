@@ -267,16 +267,14 @@ class StripeService:
                 "data": event.data.object
             }).execute()
             
-            # Handle specific events
-            print(event.type, event.data.object)
             if event.type == "checkout.session.completed":
                 await self._handle_checkout_completed(event.data.object)
             elif event.type == "customer.subscription.created":
                 await self._handle_subscription_created(event.data.object)
-            elif event.type == "customer.subscription.updated":
-                await self._handle_subscription_updated(event.data.object)
             elif event.type == "customer.subscription.updated" and event.data.object.cancel_at_period_end:
                 await self._handle_subscription_deleted(event.data.object)
+            elif event.type == "customer.subscription.updated":
+                await self._handle_subscription_updated(event.data.object)
             elif event.type == "invoice.payment_succeeded":
                 await self._handle_payment_succeeded(event.data.object)
             elif event.type == "invoice.payment_failed":
