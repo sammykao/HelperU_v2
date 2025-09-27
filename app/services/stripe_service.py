@@ -268,6 +268,7 @@ class StripeService:
             }).execute()
             
             # Handle specific events
+            print(event.type, event.data.object)
             if event.type == "checkout.session.completed":
                 await self._handle_checkout_completed(event.data.object)
             elif event.type == "customer.subscription.created":
