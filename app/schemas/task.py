@@ -3,6 +3,20 @@ from typing import List, Optional
 from datetime import datetime
 
 
+
+class ClientInfo(BaseModel):
+    """Client information for task display"""
+    id: str
+    first_name: str
+    last_name: str
+    phone: str
+    email: str
+    pfp_url: Optional[str] = None
+
+    # This will ignore extra fields not defined in the schema
+    class Config:
+        extra = "ignore"
+
 class TaskCreate(BaseModel):
     """Request model for creating a new task"""
 
@@ -32,6 +46,10 @@ class TaskResponse(BaseModel):
     completed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    client: Optional[ClientInfo] = Field(None, description="Client information")
+
+    class Config:
+        extra = "ignore"
 
 
 class TaskSearchRequest(BaseModel):
@@ -57,12 +75,7 @@ class TaskSearchRequest(BaseModel):
         return v
 
 
-class ClientInfo(BaseModel):
-    """Client information for task display"""
-    id: str
-    first_name: str
-    last_name: str
-    pfp_url: Optional[str] = None
+
 
 
 class TaskSearchResponse(BaseModel):

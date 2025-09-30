@@ -80,7 +80,8 @@ class TaskService:
     async def get_task(self, task_id: str) -> Optional[TaskResponse]:
         """Get a single task by ID"""
         try:
-            result = self.admin_client.table("tasks").select("*").eq("id", task_id).execute()
+            # create join with clients table
+            result = self.admin_client.table("tasks").select("*, client:client_id (*)").eq("id", task_id).execute()
             if not result.data:
                 return None
 

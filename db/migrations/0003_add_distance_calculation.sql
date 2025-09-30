@@ -159,6 +159,8 @@ BEGIN
             'id', c.id,
             'first_name', c.first_name,
             'last_name', c.last_name,
+            'phone', c.phone,
+            'email', c.email,
             'pfp_url', c.pfp_url
         ) as client
     FROM public.tasks t
