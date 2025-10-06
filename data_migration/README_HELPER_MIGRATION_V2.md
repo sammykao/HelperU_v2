@@ -94,7 +94,7 @@ python migrate_helpers_v2.py --verbose
 | `college` | `college` | Required field |
 | `bio` | `bio` | Required field |
 | `graduation_year` | `graduation_year` | Required, validated as integer |
-| `zip_code` | `zip_code` | Required field |
+| `zip_code` | `zip_code` | Required field - Tufts gets 02144, others get 02115 if missing |
 | `profile_image_url` | `pfp_url` | Optional profile picture URL |
 | `created_at` | `created_at` | Preserved from original |
 | `updated_at` | `updated_at` | Set to current time |
@@ -105,7 +105,8 @@ python migrate_helpers_v2.py --verbose
 2. **Phone Normalization**: Phone numbers are automatically converted to E.164 format (+1XXXXXXXXXX)
 3. **Duplicate Handling**: Uses PostgreSQL's `ON CONFLICT` for upsert operations
 4. **Required Fields**: Missing required fields get sensible defaults
-5. **Auth User Creation**: Creates auth users with proper metadata for Supabase
+5. **Zip Code Assignment**: Missing zip codes are assigned based on college - Tufts University gets 02144, all other colleges get 02115
+6. **Auth User Creation**: Creates auth users with proper metadata for Supabase
 
 ## 📈 **Migration Statistics:**
 

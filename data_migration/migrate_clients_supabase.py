@@ -41,6 +41,7 @@ class SupabaseClientMigrator:
             'clients_migrated': 0,
             'auth_users_created': 0,
             'errors': [],
+            'failed_clients': [],  # Track failed clients with details
             'error_categories': {
                 'duplicate_phone': 0,
                 'phone_verification': 0,
@@ -185,13 +186,39 @@ class SupabaseClientMigrator:
         try:
             # Skip if no auth_id (orphaned client)
             if not client['auth_id']:
-                logger.warning(f"Client {client['id']} has no auth_id, skipping auth user creation")
+                error_msg = f"Client {client['id']} has no auth_id, skipping auth user creation"
+                logger.warning(error_msg)
+                
+                # Track failed client
+                failed_client = {
+                    'client_id': client['id'],
+                    'first_name': client.get('first_name', 'Unknown'),
+                    'last_name': client.get('last_name', 'Client'),
+                    'email': client.get('email'),
+                    'phone': client.get('phone'),
+                    'reason': 'Missing auth_id',
+                    'error_details': error_msg
+                }
+                self.migration_stats['failed_clients'].append(failed_client)
                 return False
             
             # Format phone number
             formatted_phone = self._format_phone_number(client['phone'])
             if not formatted_phone or len(formatted_phone) != 11:
-                logger.warning(f"Invalid phone number format for client {client['id']}: {client['phone']} -> {formatted_phone}")
+                error_msg = f"Invalid phone number format for client {client['id']}: {client['phone']} -> {formatted_phone}"
+                logger.warning(error_msg)
+                
+                # Track failed client
+                failed_client = {
+                    'client_id': client['id'],
+                    'first_name': client.get('first_name', 'Unknown'),
+                    'last_name': client.get('last_name', 'Client'),
+                    'email': client.get('email'),
+                    'phone': client.get('phone'),
+                    'reason': 'Invalid phone number format',
+                    'error_details': error_msg
+                }
+                self.migration_stats['failed_clients'].append(failed_client)
                 return False
             
             with self.new_conn.cursor() as cur:
@@ -200,7 +227,20 @@ class SupabaseClientMigrator:
                 existing_user = cur.fetchone()
                 
                 if existing_user:
-                    logger.warning(f"Phone number {formatted_phone} already exists for user {existing_user[0]}, skipping auth user creation")
+                    error_msg = f"Phone number {formatted_phone} already exists for user {existing_user[0]}, skipping auth user creation"
+                    logger.warning(error_msg)
+                    
+                    # Track failed client
+                    failed_client = {
+                        'client_id': client['id'],
+                        'first_name': client.get('first_name', 'Unknown'),
+                        'last_name': client.get('last_name', 'Client'),
+                        'email': client.get('email'),
+                        'phone': client.get('phone'),
+                        'reason': 'Phone number already exists',
+                        'error_details': error_msg
+                    }
+                    self.migration_stats['failed_clients'].append(failed_client)
                     return False
                 
                 # Set phone confirmation timestamp based on verification status
@@ -253,6 +293,18 @@ class SupabaseClientMigrator:
             error_msg = f"Error creating auth user for client {client['id']}: {e}"
             logger.error(error_msg)
             self.migration_stats['errors'].append(error_msg)
+            
+            # Track failed client
+            failed_client = {
+                'client_id': client['id'],
+                'first_name': client.get('first_name', 'Unknown'),
+                'last_name': client.get('last_name', 'Client'),
+                'email': client.get('email'),
+                'phone': client.get('phone'),
+                'reason': 'Auth user creation failed',
+                'error_details': error_msg
+            }
+            self.migration_stats['failed_clients'].append(failed_client)
             
             # Categorize the error
             if "duplicate key value violates unique constraint" in str(e):
@@ -366,15 +418,17 @@ class SupabaseClientMigrator:
                 cur.execute("""
                     INSERT INTO public.subscriptions (
                         user_id,
+                        stripe_subscription_id,
                         stripe_customer_id,
                         plan,
                         status,
                         created_at,
                         updated_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (user_id) DO NOTHING
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (stripe_subscription_id) DO NOTHING
                 """, (
                     client['auth_id'],
+                    None,
                     client['stripe_customer_id'],
                     'free',  # Default to free plan
                     'active',  # Default to active status
@@ -404,7 +458,9 @@ class SupabaseClientMigrator:
             
             # Step 2: Process each client
             for i, client in enumerate(old_clients, 1):
-                logger.info(f"Processing client {i}/{len(old_clients)}: {client['id']}")
+                logger.info(
+                    f"Processing client {i}/{len(old_clients)}: {client['first_name']} {client['last_name']} (ID: {client['id']})"
+                )
                 
                 try:
                     # Start a new transaction for each client
@@ -426,7 +482,9 @@ class SupabaseClientMigrator:
                     
                     # Commit after each successful client migration
                     self.new_conn.commit()
-                    logger.info(f"SUCCESS: Migrated client {client['id']}")
+                    logger.info(
+                        f"SUCCESS: Migrated client {client['first_name']} {client['last_name']} (ID: {client['id']})"
+                    )
                     
                 except Exception as e:
                     error_msg = f"Unexpected error processing client {client['id']}: {e}"
@@ -466,6 +524,19 @@ class SupabaseClientMigrator:
                 print(f"  ... and {len(self.migration_stats['errors']) - 5} more errors")
         else:
             print("\nNo errors encountered!")
+        
+        # Print failed clients details
+        if self.migration_stats['failed_clients']:
+            print(f"\nFAILED CLIENTS ({len(self.migration_stats['failed_clients'])}):")
+            print("-" * 60)
+            for i, client in enumerate(self.migration_stats['failed_clients'], 1):
+                print(f"{i}. Client ID: {client['client_id']}")
+                print(f"   Name: {client['first_name']} {client['last_name']}")
+                print(f"   Email: {client['email']}")
+                print(f"   Phone: {client['phone']}")
+                print(f"   Reason: {client['reason']}")
+                print(f"   Error: {client['error_details']}")
+                print("-" * 40)
         
         print("="*60)
     

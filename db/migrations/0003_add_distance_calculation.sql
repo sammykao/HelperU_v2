@@ -202,6 +202,104 @@ BEGIN
 END;
 $$;
 
+-- Function to get tasks sorted by post date (created_at DESC)
+CREATE OR REPLACE FUNCTION public.get_tasks_by_post_date(
+    search_zip_code TEXT,
+    search_query TEXT DEFAULT NULL,
+    search_location_type TEXT DEFAULT NULL,
+    min_hourly_rate DECIMAL DEFAULT NULL,
+    max_hourly_rate DECIMAL DEFAULT NULL,
+    search_limit INTEGER DEFAULT 20,
+    search_offset INTEGER DEFAULT 0
+)
+RETURNS TABLE(
+    id UUID,
+    client_id UUID,
+    hourly_rate REAL,
+    title TEXT,
+    dates JSONB,
+    location_type TEXT,
+    zip_code TEXT,
+    description TEXT,
+    tools_info TEXT,
+    public_transport_info TEXT,
+    completed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    distance DECIMAL,
+    client JSON
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    search_lat DECIMAL;
+    search_lng DECIMAL;
+BEGIN
+    -- Get coordinates for search zip code (optional distance display)
+    SELECT lat, lng INTO search_lat, search_lng
+    FROM public.zip_codes as zc
+    WHERE zc.zip_code = search_zip_code;
+
+    RETURN QUERY
+    SELECT 
+        t.id,
+        t.client_id,
+        t.hourly_rate,
+        t.title,
+        t.dates,
+        t.location_type,
+        t.zip_code,
+        t.description,
+        t.tools_info,
+        t.public_transport_info,
+        t.completed_at,
+        t.created_at,
+        t.updated_at,
+        CASE 
+            WHEN search_lat IS NOT NULL AND search_lng IS NOT NULL 
+                 AND zc.lat IS NOT NULL AND zc.lng IS NOT NULL
+            THEN public.calculate_distance(search_lat, search_lng, zc.lat, zc.lng)
+            ELSE NULL
+        END AS distance,
+        json_build_object(
+            'id', c.id,
+            'first_name', c.first_name,
+            'last_name', c.last_name,
+            'phone', c.phone,
+            'email', c.email,
+            'pfp_url', c.pfp_url
+        ) as client
+    FROM public.tasks t
+    LEFT JOIN public.zip_codes zc ON t.zip_code = zc.zip_code
+    JOIN public.clients c ON t.client_id = c.id
+    WHERE 
+        t.completed_at IS NULL
+        AND (
+            search_query IS NULL 
+            OR t.title ILIKE '%' || search_query || '%'
+            OR t.description ILIKE '%' || search_query || '%'
+        )
+        AND (
+            search_location_type IS NULL 
+            OR t.location_type = search_location_type
+        )
+        AND (
+            min_hourly_rate IS NULL 
+            OR t.hourly_rate >= min_hourly_rate
+        )
+        AND (
+            max_hourly_rate IS NULL 
+            OR t.hourly_rate <= max_hourly_rate
+        )
+    ORDER BY 
+        t.created_at DESC
+    LIMIT search_limit
+    OFFSET search_offset;
+END;
+$$;
+
 -- Function to count helpers matching search criteria
 CREATE OR REPLACE FUNCTION public.count_helpers_matching_criteria(
     search_query TEXT DEFAULT NULL,

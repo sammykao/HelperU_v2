@@ -366,15 +366,17 @@ class SupabasehelperMigrator:
                 cur.execute("""
                     INSERT INTO public.subscriptions (
                         user_id,
+                        stripe_subscription_id,
                         stripe_customer_id,
                         plan,
                         status,
                         created_at,
                         updated_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (user_id) DO NOTHING
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (stripe_subscription_id) DO NOTHING
                 """, (
                     helper['auth_id'],
+                    None,
                     helper['stripe_customer_id'],
                     'free',  # Default to free plan
                     'active',  # Default to active status

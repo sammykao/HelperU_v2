@@ -1,0 +1,4 @@
+task_id,title,email,phone,reason,error_details
+599b797e-8d36-4032-be62-689a84acab22,Brandeis University Tour from Student,kaosam77@gmail.com,6108883335,Database operation failed,"Database operation failed for task 599b797e-8d36-4032-be62-689a84acab22: insert or update on table ""tasks"" violates foreign key constraint ""tasks_zip_code_fkey""
+DETAIL:  Key (zip_code)=(02153) is not present in table ""zip_codes"".
+"

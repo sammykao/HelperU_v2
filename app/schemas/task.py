@@ -61,6 +61,7 @@ class TaskSearchRequest(BaseModel):
     max_hourly_rate: Optional[float] = Field(None, ge=0, description="Maximum hourly rate filter")
     search_limit: int = Field(20, ge=1, le=100, description="Number of tasks to return")
     search_offset: int = Field(0, ge=0, description="Number of tasks to skip")
+    sort_by: Optional[str] = Field('post_date', description="Sort mode: 'distance' or 'post_date'")
 
     @validator("max_hourly_rate")
     def validate_hourly_rate_range(cls, v, values):

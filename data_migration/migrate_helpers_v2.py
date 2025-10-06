@@ -44,6 +44,7 @@ class HelperV2Migrator:
             'auth_users_created': 0,
             'auth_users_updated': 0,
             'errors': [],
+            'failed_helpers': [],  # Track failed helpers with details
             'error_categories': {
                 'duplicate_phone': 0,
                 'duplicate_email': 0,
@@ -252,7 +253,20 @@ class HelperV2Migrator:
             email = helper_data.get('email', '')
             
             if not email or not normalized_phone:
-                logger.warning(f"Missing email or phone for helper {helper_data.get('id')}")
+                error_msg = f"Missing email or phone for helper {helper_data.get('id')}"
+                logger.warning(error_msg)
+                
+                # Track failed helper
+                failed_helper = {
+                    'helper_id': helper_data.get('id'),
+                    'first_name': helper_data.get('first_name', 'Unknown'),
+                    'last_name': helper_data.get('last_name', 'Helper'),
+                    'email': email,
+                    'phone': helper_data.get('phone'),
+                    'reason': 'Missing email or phone',
+                    'error_details': error_msg
+                }
+                self.migration_stats['failed_helpers'].append(failed_helper)
                 return None
             
             # Start a new transaction for this operation
@@ -347,14 +361,40 @@ class HelperV2Migrator:
                         
                 except Exception as e:
                     self.new_conn.rollback()
-                    logger.error(f"Database operation failed for helper {helper_data.get('id')}: {e}")
+                    error_msg = f"Database operation failed for helper {helper_data.get('id')}: {e}"
+                    logger.error(error_msg)
                     self.migration_stats['error_categories']['auth_user_creation'] += 1
+                    
+                    # Track failed helper
+                    failed_helper = {
+                        'helper_id': helper_data.get('id'),
+                        'first_name': helper_data.get('first_name', 'Unknown'),
+                        'last_name': helper_data.get('last_name', 'Helper'),
+                        'email': helper_data.get('email'),
+                        'phone': helper_data.get('phone'),
+                        'reason': 'Auth user creation failed',
+                        'error_details': error_msg
+                    }
+                    self.migration_stats['failed_helpers'].append(failed_helper)
                     return None
                     
         except Exception as e:
             self.new_conn.rollback()
-            logger.error(f"Failed to create/update auth user for helper {helper_data.get('id')}: {e}")
+            error_msg = f"Failed to create/update auth user for helper {helper_data.get('id')}: {e}"
+            logger.error(error_msg)
             self.migration_stats['error_categories']['auth_user_creation'] += 1
+            
+            # Track failed helper
+            failed_helper = {
+                'helper_id': helper_data.get('id'),
+                'first_name': helper_data.get('first_name', 'Unknown'),
+                'last_name': helper_data.get('last_name', 'Helper'),
+                'email': helper_data.get('email'),
+                'phone': helper_data.get('phone'),
+                'reason': 'Auth user creation failed',
+                'error_details': error_msg
+            }
+            self.migration_stats['failed_helpers'].append(failed_helper)
             return None
     
     def migrate_helper_data(self, helper_data: Dict[str, Any], auth_user_id: str) -> bool:
@@ -392,7 +432,15 @@ class HelperV2Migrator:
                     college = helper_data.get('college', 'Unknown College')
                     bio = helper_data.get('bio', 'Helper profile migrated from old system')
                     graduation_year = helper_data.get('graduation_year', 2025)
-                    zip_code = helper_data.get('zip_code', '00000')
+                    
+                    # Set zip code based on college - Tufts gets 02144, others get 02115
+                    zip_code = helper_data.get('zip_code')
+                    if not zip_code:
+                        if college and 'tufts' in college.lower():
+                            zip_code = '02144'  # Tufts University zip code
+                        else:
+                            zip_code = '02115'  # Default Boston area zip code
+                    
                     pfp_url = helper_data.get('profile_image_url')
                     
                     # Validate graduation year
@@ -424,14 +472,40 @@ class HelperV2Migrator:
                     
                 except Exception as e:
                     self.new_conn.rollback()
-                    logger.error(f"Database operation failed for helper {helper_data.get('id')}: {e}")
+                    error_msg = f"Database operation failed for helper {helper_data.get('id')}: {e}"
+                    logger.error(error_msg)
                     self.migration_stats['error_categories']['helper_migration'] += 1
+                    
+                    # Track failed helper
+                    failed_helper = {
+                        'helper_id': helper_data.get('id'),
+                        'first_name': helper_data.get('first_name', 'Unknown'),
+                        'last_name': helper_data.get('last_name', 'Helper'),
+                        'email': helper_data.get('email'),
+                        'phone': helper_data.get('phone'),
+                        'reason': 'Helper data migration failed',
+                        'error_details': error_msg
+                    }
+                    self.migration_stats['failed_helpers'].append(failed_helper)
                     return False
                 
         except Exception as e:
             self.new_conn.rollback()
-            logger.error(f"Failed to migrate helper data for {helper_data.get('id')}: {e}")
+            error_msg = f"Failed to migrate helper data for {helper_data.get('id')}: {e}"
+            logger.error(error_msg)
             self.migration_stats['error_categories']['helper_migration'] += 1
+            
+            # Track failed helper
+            failed_helper = {
+                'helper_id': helper_data.get('id'),
+                'first_name': helper_data.get('first_name', 'Unknown'),
+                'last_name': helper_data.get('last_name', 'Helper'),
+                'email': helper_data.get('email'),
+                'phone': helper_data.get('phone'),
+                'reason': 'Helper data migration failed',
+                'error_details': error_msg
+            }
+            self.migration_stats['failed_helpers'].append(failed_helper)
             return False
     
     def run_migration(self) -> bool:
@@ -459,6 +533,7 @@ class HelperV2Migrator:
                     auth_user_id = self.create_or_update_auth_user(helper_data)
                     if not auth_user_id:
                         logger.warning(f"Skipping helper {helper_data.get('id')} due to auth user creation failure")
+                        # Failed helper already tracked in create_or_update_auth_user method
                         continue
                     
                     # Migrate helper data
@@ -470,6 +545,18 @@ class HelperV2Migrator:
                     logger.error(error_msg)
                     self.migration_stats['errors'].append(error_msg)
                     self.migration_stats['error_categories']['other'] += 1
+                    
+                    # Track failed helper
+                    failed_helper = {
+                        'helper_id': helper_data.get('id'),
+                        'first_name': helper_data.get('first_name', 'Unknown'),
+                        'last_name': helper_data.get('last_name', 'Helper'),
+                        'email': helper_data.get('email'),
+                        'phone': helper_data.get('phone'),
+                        'reason': 'Processing failed',
+                        'error_details': error_msg
+                    }
+                    self.migration_stats['failed_helpers'].append(failed_helper)
             
             # Log migration summary
             self.log_migration_summary()
@@ -483,7 +570,7 @@ class HelperV2Migrator:
     def log_migration_summary(self):
         """Log a summary of the migration results."""
         logger.info("=" * 60)
-        logger.info("MIGRATION SUMMARY")
+        logger.info("HELPER MIGRATION SUMMARY")
         logger.info("=" * 60)
         logger.info(f"Total helpers found: {self.migration_stats['helpers_found']}")
         logger.info(f"Helpers successfully migrated: {self.migration_stats['helpers_migrated']}")
@@ -496,6 +583,19 @@ class HelperV2Migrator:
             for category, count in self.migration_stats['error_categories'].items():
                 if count > 0:
                     logger.info(f"  {category}: {count}")
+        
+        # Print failed helpers details
+        if self.migration_stats['failed_helpers']:
+            logger.info(f"\nFAILED HELPERS ({len(self.migration_stats['failed_helpers'])}):")
+            logger.info("-" * 60)
+            for i, helper in enumerate(self.migration_stats['failed_helpers'], 1):
+                logger.info(f"{i}. Helper ID: {helper['helper_id']}")
+                logger.info(f"   Name: {helper['first_name']} {helper['last_name']}")
+                logger.info(f"   Email: {helper['email']}")
+                logger.info(f"   Phone: {helper['phone']}")
+                logger.info(f"   Reason: {helper['reason']}")
+                logger.info(f"   Error: {helper['error_details']}")
+                logger.info("-" * 40)
         
         logger.info("=" * 60)
 

@@ -55,7 +55,9 @@ class TaskService:
             if request.location_type not in self.ENUM_LOCATION_TYPE:
                 raise HTTPException(status_code=400, detail="Invalid location type, location type must be one of the following: " + ", ".join(self.ENUM_LOCATION_TYPE))
             
+        
             result = self.admin_client.table("tasks").insert(task_payload).execute()
+            
 
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to create task")
@@ -202,12 +204,19 @@ class TaskService:
     ) -> TaskSearchListResponse:
         """Search tasks with filters using efficient count and data queries"""
         try:
-            # First, get the total count efficiently without pulling all data
-            
-            result = self.admin_client.rpc(
-                "get_tasks_with_distance",
-                search_request.model_dump()
-            ).execute()
+            search_request_dict = search_request.model_dump()
+            sort_by = search_request_dict.pop("sort_by", "post_date")
+            # Route to the correct SQL function based on sort_by
+            if sort_by == "distance":
+                result = self.admin_client.rpc(
+                    "get_tasks_with_distance",
+                        search_request_dict
+                    ).execute()
+            else:
+                result = self.admin_client.rpc(
+                    "get_tasks_by_post_date",
+                    search_request_dict
+                ).execute()
 
             if not result.data:
                 return TaskSearchListResponse(
@@ -216,6 +225,7 @@ class TaskService:
                     offset=search_request.search_offset,
                 )
 
+            
             # Convert to TaskSearchResponse objects
             tasks = [TaskSearchResponse(**task_data) for task_data in result.data]
 
