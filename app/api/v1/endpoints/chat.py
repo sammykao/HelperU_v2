@@ -106,6 +106,8 @@ async def send_message(
         websocket_message = WebSocketChatMessage(chat_id=chat_id, message=message)
 
         await websocket_manager.broadcast_chat_message(chat_id, websocket_message)
+        
+        print("after sending broadcast")
         await notification_service.send_msg_notification(
             chat_id, current_user.id, message.content
         )
