@@ -72,7 +72,7 @@ We focus on creating a safe, reliable, and efficient marketplace where quality w
 - 1 task postings per month
 - Standard support
 
-**Premium Plan ($9.99/month):**
+**Premium Plan ($10/month):**
 - Unlimited task postings
 - Priority customer support
 - Task pro

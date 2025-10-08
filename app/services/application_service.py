@@ -64,7 +64,7 @@ class ApplicationService:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No tasks found")
 
             applications = []
-            for task in tasks:
+            for task in tasks.tasks:
                 applications_result = await self.get_applications_by_task(user_id, task.id)
                 applications.extend(applications_result.applications)
 
