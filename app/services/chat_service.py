@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import UUID
 from fastapi import HTTPException, status
 from supabase import Client
+import asyncio
 
 from app.schemas.chat import (
     ChatResponse,

@@ -25,7 +25,7 @@ from app.core.config import settings
 class TaskService:
     """Service for handling task operations and business logic"""
 
-    ENUM_LOCATION_TYPE = ["remote", "in-person"]
+    ENUM_LOCATION_TYPE = ["remote", "in_person"]
 
     def __init__(self, admin_client: Client, stripe_service: StripeService):
         self.admin_client = admin_client
