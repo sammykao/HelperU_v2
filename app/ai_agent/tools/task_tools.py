@@ -68,7 +68,7 @@ async def create_task(client_id: str,
                             completed. Format should be ISO 8601 (YYYY-MM-DD).
                             Multiple dates indicate flexibility in scheduling.
         location_type (str): The type of location where the task will be
-                            performed. Options only include: 'remote', 'in-person'.
+                            performed. Options only include: 'remote', 'in_person'.
         zip_code (Optional[str]): The ZIP code where the task will be performed.
                                     Required for on-site tasks, optional for remote.
                                     Must be a valid US ZIP code format.
@@ -92,7 +92,7 @@ async def create_task(client_id: str,
                         - title (str): Task title
                         - hourly_rate (float): Hourly rate in dollars
                         - dates (List[str]): List of dates in YYYY-MM-DD format
-                        - location_type (str): Type of location (remote, in-person, etc.)
+                        - location_type (str): Type of location (remote, in_person, etc.)
                         - zip_code (Optional[str]): ZIP code for the task
                         - description (str): Detailed task description
                         - tools_info (Optional[str]): Information about required tools
@@ -156,7 +156,7 @@ async def get_task(task_id: str) -> TaskResponse:
                         - title (str): Task title
                         - hourly_rate (float): Hourly rate in dollars
                         - dates (List[str]): List of dates in YYYY-MM-DD format
-                        - location_type (str): Type of location (remote, in-person, etc.)
+                        - location_type (str): Type of location (remote, in_person, etc.)
                         - zip_code (Optional[str]): ZIP code for the task
                         - description (str): Detailed task description
                         - tools_info (Optional[str]): Information about required tools
@@ -239,7 +239,7 @@ async def update_task(
                         - title (str): Task title
                         - hourly_rate (float): Hourly rate in dollars
                         - dates (List[str]): List of dates in YYYY-MM-DD format
-                        - location_type (str): Type of location (remote, in-person, etc.)
+                        - location_type (str): Type of location (remote, in_person, etc.)
                         - zip_code (Optional[str]): ZIP code for the task
                         - description (str): Detailed task description
                         - tools_info (Optional[str]): Information about required tools
@@ -382,7 +382,7 @@ async def search_tasks(
                             - title (str): Task title
                             - hourly_rate (float): Hourly rate in dollars
                             - dates (List[str]): List of dates in YYYY-MM-DD format
-                            - location_type (str): Type of location (remote, in-person, etc.)
+                            - location_type (str): Type of location (remote, in_person, etc.)
                             - zip_code (Optional[str]): ZIP code for the task
                             - description (str): Detailed task description
                             - tools_info (Optional[str]): Information about required tools
@@ -468,7 +468,7 @@ async def get_user_tasks(
                             - title (str): Task title
                             - hourly_rate (float): Hourly rate in dollars
                             - dates (List[str]): List of dates in YYYY-MM-DD format
-                            - location_type (str): Type of location (remote, in-person, etc.)
+                            - location_type (str): Type of location (remote, in_person, etc.)
                             - zip_code (Optional[str]): ZIP code for the task
                             - description (str): Detailed task description
                             - tools_info (Optional[str]): Information about required tools

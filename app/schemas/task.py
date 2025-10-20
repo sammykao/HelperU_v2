@@ -22,7 +22,7 @@ class TaskCreate(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=200)
     dates: List[str] = Field(..., description="List of dates in YYYY-MM-DD format")
-    location_type: str = Field(..., description="Type of location (remote, in-person, etc.)")
+    location_type: str = Field(..., description="Type of location (remote, in_person, etc.)")
     zip_code: Optional[str] = Field(None, description="ZIP code for the task")
     hourly_rate: float = Field(None, description="Hourly rate for the task")
     description: str = Field(..., min_length=10, max_length=2000)
@@ -56,7 +56,7 @@ class TaskSearchRequest(BaseModel):
     """Request model for task search filtering"""
     search_zip_code: str = Field(..., description="Base location for distance calculations")
     search_query: Optional[str] = Field(None, description="Text search in title and description")
-    search_location_type: Optional[str] = Field(None, description="Filter by location type (remote, in-person, etc.)")
+    search_location_type: Optional[str] = Field(None, description="Filter by location type (remote, in_person, etc.)")
     min_hourly_rate: Optional[float] = Field(None, ge=0, description="Minimum hourly rate filter")
     max_hourly_rate: Optional[float] = Field(None, ge=0, description="Maximum hourly rate filter")
     search_limit: int = Field(20, ge=1, le=100, description="Number of tasks to return")
@@ -109,7 +109,7 @@ class TaskUpdate(BaseModel):
         None, description="List of dates in YYYY-MM-DD format"
     )
     location_type: Optional[str] = Field(
-        None, description="Type of location (remote, in-person, etc.)"
+        None, description="Type of location (remote, in_person, etc.)"
     )
     zip_code: Optional[str] = Field(None, description="ZIP code for the task")
     hourly_rate: Optional[float] = Field(None, description="Hourly rate for the task")

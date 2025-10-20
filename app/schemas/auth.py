@@ -85,7 +85,7 @@ class HelperProfileUpdateRequest(BaseModel):
     college: str = Field(
         ..., min_length=1, max_length=100, description="Helper's college/university"
     )
-    bio: str = Field(..., min_length=10, max_length=500, description="Helper's bio")
+    bio: str = Field(..., min_length=10, max_length=5000, description="Helper's bio")
     graduation_year: int = Field(
         ..., ge=2020, le=2030, description="Expected graduation year"
     )
