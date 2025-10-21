@@ -412,6 +412,7 @@ class AuthService:
                     "graduation_year": payload.graduation_year,
                     "zip_code": payload.zip_code,
                     "pfp_url": payload.pfp_url,
+                    "venmo": payload.venmo
                 }
             ).execute()
 

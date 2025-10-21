@@ -91,6 +91,7 @@ class HelperProfileUpdateRequest(BaseModel):
     )
     zip_code: str = Field(..., pattern=r"^\d{5}$", description="5-digit ZIP code")
     pfp_url: Optional[str] = Field(None, description="Profile picture URL")
+    venmo: Optional[str] = Field(..., description="Helper's Venmo Handle")
 
 
 class AuthResponse(BaseModel):

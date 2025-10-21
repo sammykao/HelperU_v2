@@ -14,8 +14,8 @@ from app.schemas.task import (
     PublicTask,
     PublicTaskResponse,
     ClientInfo,
-
 )
+
 from app.schemas.sms import TaskCreationNotification
 from app.services.stripe_service import StripeService
 from app.utils.emailer import EmailUtils

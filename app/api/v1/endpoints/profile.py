@@ -5,6 +5,7 @@ from fastapi.security import HTTPBearer
 from app.deps.supabase import get_current_user, get_profile_service
 from app.services.profile_service import ProfileService
 from app.schemas.auth import ClientProfileUpdateRequest, HelperProfileUpdateRequest
+from app.schemas.profile import ProfileUpdateData
 
 router = APIRouter()
 security = HTTPBearer()
@@ -27,7 +28,7 @@ async def get_user_profile(
             # Both user types; no concrete profile to return
             profile = { 
                 "client": await profile_service.get_client_profile(current_user.id) or None, 
-                "helper": await profile_service.get_helper_profile(current_user.id) or Nonex    
+                "helper": await profile_service.get_helper_profile(current_user.id) or None
             }
 
         return {
@@ -106,6 +107,7 @@ async def update_helper_profile(
             graduation_year=request.graduation_year,
             zip_code=request.zip_code,
             pfp_url=pfp_url,
+            venmo=request.venmo
         )
 
         result = await profile_service.update_helper_profile(
@@ -115,6 +117,7 @@ async def update_helper_profile(
     except HTTPException:
         raise
     except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update profile: {str(e)}",
