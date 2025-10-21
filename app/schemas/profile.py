@@ -46,6 +46,7 @@ class HelperProfileData(BaseModel):
     number_of_applications: Optional[int] = 0
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    venmo: Optional[str] = None
 
 
 class ProfileUpdateData(BaseModel):
@@ -58,6 +59,7 @@ class ProfileUpdateData(BaseModel):
     bio: Optional[str] = None
     graduation_year: Optional[int] = None
     zip_code: Optional[str] = None
+    venmo: Optional[str] = None
 
 class ProfileExpoNotificationRequest(BaseModel):
     """request to register notification push token"""
