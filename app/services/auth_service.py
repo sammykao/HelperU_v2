@@ -505,8 +505,8 @@ class AuthService:
 
             email_verified, email_verified_at, email = False, None, None
             if user_response.user.email_confirmed_at:
-                email_verified = False
-                email_verified_at = None
+                email_verified = True
+                email_verified_at = user_response.user.email_confirmed_at
                 email = user_response.user.email
 
             return HelperEmailVerificationResponse(

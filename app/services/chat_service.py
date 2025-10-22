@@ -489,11 +489,12 @@ class ChatService:
         
         # Send SMS notification
         if other_participant_info.phone:
+            print(other_participant_info.phone, sender_info.first_name, sender_info.last_name, chat_id, request.content)	
             notification = MessageNotification(
                 recipient_phone=other_participant_info.phone,
                 sender_name=f"{sender_info.first_name} {sender_info.last_name}",
                 chat_id=str(chat_id),
                 message_preview=request.content
             )
-            self.smser.send_message_notification(notification)
+            await self.smser.send_message_notification(notification)
         
