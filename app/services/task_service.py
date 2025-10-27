@@ -205,12 +205,14 @@ class TaskService:
         """Search tasks with filters using efficient count and data queries"""
         try:
             search_request_dict = search_request.model_dump()
+            print(search_request_dict)
             sort_by = search_request_dict.pop("sort_by", "post_date")
+            print(sort_by)
             # Route to the correct SQL function based on sort_by
             if sort_by == "distance":
                 result = self.admin_client.rpc(
                     "get_tasks_with_distance",
-                        search_request_dict
+                    search_request_dict
                     ).execute()
             else:
                 result = self.admin_client.rpc(

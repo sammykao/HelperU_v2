@@ -62,6 +62,7 @@ class TaskSearchRequest(BaseModel):
     search_limit: int = Field(20, ge=1, le=100, description="Number of tasks to return")
     search_offset: int = Field(0, ge=0, description="Number of tasks to skip")
     sort_by: Optional[str] = Field('post_date', description="Sort mode: 'distance' or 'post_date'")
+    distance_radius: Optional[float] = Field(100, ge=0, le=500, description="Distance radius in miles for distance sorting, default is 100 miles")
 
     @validator("max_hourly_rate")
     def validate_hourly_rate_range(cls, v, values):

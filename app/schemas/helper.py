@@ -23,6 +23,8 @@ class HelperResponse(BaseModel):
     graduation_year: int
     zip_code: Optional[str]
     pfp_url: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
 
     class Config:
         # This will ignore extra fields not defined in the schema

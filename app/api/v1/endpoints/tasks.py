@@ -43,6 +43,8 @@ async def get_tasks(
     search_limit: int = 20,
     search_offset: int = 0,
     task_service: TaskService = Depends(get_task_service),
+    distance_radius: float = 100,
+    sort_by: str = None
 ):
     """Get tasks with pagination, filtering, and distance-based sorting"""
     try:
@@ -54,7 +56,9 @@ async def get_tasks(
             min_hourly_rate=min_hourly_rate,
             max_hourly_rate=max_hourly_rate,
             search_limit=search_limit,
-            search_offset=search_offset
+            search_offset=search_offset,
+            sort_by=sort_by,
+            distance_radius=distance_radius
         )
         return await task_service.search_tasks(search_request)
     except HTTPException:

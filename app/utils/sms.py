@@ -108,7 +108,7 @@ class SMSUtils:
 Task: {notification.task_title}
 Description: {notification.task_description[:100]}{'...' if len(notification.task_description) > 100 else ''}
 
-You'll be notified when helpers apply to your task.
+You'll be notified by text message when helpers apply to your task. You can also search for and invite students to apply to the task on the task dashboard page.
 
 View details in the HelperU app or website."""
 
