@@ -52,6 +52,7 @@ class ApplicationReceivedNotification(BaseModel):
     client_phone: str = Field(..., description="Client's phone number")
     helper_name: str = Field(..., description="Name of the helper who applied")
     task_title: str = Field(..., description="Title of the task")
+    task_id: Optional[str] = Field(None, description="Task ID")
 
 
 class ApplicationStatusNotification(BaseModel):
@@ -130,7 +131,7 @@ class InvitationNotification(BaseModel):
     helper_phone: str = Field(..., description="Helper's phone number")
     client_name: str = Field(..., description="Name of the client")
     task_title: str = Field(..., description="Title of the task")
-
+    task_id: Optional[str] = Field(None, description="Task ID")
 
 # Union type for all notification models
 NotificationRequest = (

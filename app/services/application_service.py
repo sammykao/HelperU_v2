@@ -237,21 +237,21 @@ class ApplicationService:
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
-    async def send_application_received_notification(self, client_id: str, helper_name: str, task_title: str) -> None:
+    async def send_application_received_notification(self, client_id: str, helper_name: str, task_title: str, task_id: str) -> None:
         """Send application received notification"""
         client = self.admin_client.table("clients").select("*").eq("id", client_id).execute()
         if not client.data:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
-        await self.smser.send_application_received_notification(ApplicationReceivedNotification(client_phone=client.data[0]["phone"], helper_name=helper_name, task_title=task_title))
+        await self.smser.send_application_received_notification(ApplicationReceivedNotification(client_phone=client.data[0]["phone"], helper_name=helper_name, task_title=task_title, task_id=task_id))
     
-    async def send_invitation_notification(self, client_id: str, helper_id: str, task_title: str) -> None:
+    async def send_invitation_notification(self, client_id: str, helper_id: str, task_title: str, task_id: str) -> None:
         """Send invitation notification"""
         #create a client helper join request
         client = self.admin_client.table("clients").select("*").eq("id", client_id).execute()
         helper = self.admin_client.table("helpers").select("*").eq("id", helper_id).execute()
         if not client.data or not helper.data:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
-        await self.smser.send_invitation_notification(InvitationNotification(client_name=client.data[0]["first_name"] + " " + client.data[0]["last_name"], helper_phone=helper.data[0]["phone"], task_title=task_title))
+        await self.smser.send_invitation_notification(InvitationNotification(client_name=client.data[0]["first_name"] + " " + client.data[0]["last_name"], helper_phone=helper.data[0]["phone"], task_title=task_title, task_id=task_id))
 
 # from supabase import Client
 # from app.schemas.applications import (
