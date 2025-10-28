@@ -1,4 +1,4 @@
-from langchain.tools.base import BaseTool
+from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
 from app.core.config import settings
 

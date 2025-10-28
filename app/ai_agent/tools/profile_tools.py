@@ -9,7 +9,7 @@ system and return serializable JSON responses.
 
 from typing import Optional
 from app.deps.supabase import get_profile_service
-from langchain.tools import tool
+from langchain_core.tools import tool
 from app.schemas.profile import (
     UserProfileStatusResponse,
     ClientProfileData,

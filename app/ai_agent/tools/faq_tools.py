@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional
-from langchain.tools import tool
+from langchain_core.tools import tool
 
 def _initialize_faq_database() -> Dict[str, Dict]:
         """Initialize FAQ database with common questions and answers"""

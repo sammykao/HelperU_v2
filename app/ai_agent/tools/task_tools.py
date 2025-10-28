@@ -19,7 +19,7 @@ from app.schemas.task import (
     TaskSearchResponse,
     TaskListResponse
 )
-from langchain.tools import tool
+from langchain_core.tools import tool
 
 # Global service instances
 task_service = get_task_service()
