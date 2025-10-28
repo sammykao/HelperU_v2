@@ -118,11 +118,16 @@ View details in the HelperU app or website."""
         self, 
         notification: ApplicationReceivedNotification
     ) -> OpenPhoneMessageResponse:
+
+
         """Send notification when a helper applies to a task"""
         content = f"""📝 New Application Received!
 
 Helper: {notification.helper_name}
 Task: {notification.task_title}"""
+        if notification.task_id:
+            content += f"\nView it here: https://helperu.com/task/{notification.task_id}"
+
 
         return self._send_sms([notification.client_phone], content)
     
@@ -147,14 +152,15 @@ Reply in the HelperU app to continue the conversation."""
         notification: InvitationNotification
     ) -> OpenPhoneMessageResponse:
         """Send notification when a helper is invited to a task"""
-        content = f"""📝 New Invitation to apply to task!
+        content = f"""📝 New Invitation to apply to a task!
 
 Task: {notification.task_title}
 Client: {notification.client_name}
 
 Visit HelperU or open the app to accept view the post they invited you to.
         """
-
+        if notification.task_id:
+            content += f"\nView it here: https://helperu.com/task/{notification.task_id}"
         return self._send_sms([notification.helper_phone], content)
     
     async def send_welcome_message(

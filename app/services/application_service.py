@@ -123,7 +123,7 @@ class ApplicationService:
             
             # Update helper's application count (fire and forget)
             asyncio.create_task(self.update_helper_application_count(helper_id))
-            asyncio.create_task(self.send_application_received_notification(client_id=task.client_id, helper_name=helper.first_name + " " + helper.last_name, task_title=task.title))
+            asyncio.create_task(self.send_application_received_notification(client_id=task.client_id, helper_name=helper.first_name + " " + helper.last_name, task_title=task.title, task_id=task_id))
             # Return the application    
             return ApplicationResponse(
                 application=ApplicationInfo(**application.data[0]),
@@ -231,7 +231,7 @@ class ApplicationService:
             if not invitation.data:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create invitation")
             
-            asyncio.create_task(self.send_invitation_notification(client_id=task.client_id, helper_id=helper_id, task_title=task.title))
+            asyncio.create_task(self.send_invitation_notification(client_id=task.client_id, helper_id=helper_id, task_title=task.title, task_id=task_id))
             # Return the invitation
             return InvitationResponse(**invitation.data[0])
         except Exception as e:
