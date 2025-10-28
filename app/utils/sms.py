@@ -126,7 +126,7 @@ View details in the HelperU app or website."""
 Helper: {notification.helper_name}
 Task: {notification.task_title}"""
         if notification.task_id:
-            content += f"\nView it here: https://helperu.com/task/{notification.task_id}"
+            content += f"\nView it here: https://helperu.com/tasks/browse/{notification.task_id}"
 
 
         return self._send_sms([notification.client_phone], content)
@@ -160,7 +160,7 @@ Client: {notification.client_name}
 Visit HelperU or open the app to accept view the post they invited you to.
         """
         if notification.task_id:
-            content += f"\nView it here: https://helperu.com/task/{notification.task_id}"
+            content += f"\nView it here: https://helperu.com/tasks/browse/{notification.task_id}"
         return self._send_sms([notification.helper_phone], content)
     
     async def send_welcome_message(
