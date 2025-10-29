@@ -206,7 +206,14 @@ class ApplicationService:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Helper not found")
             
             # Get all invitations for the helper, join statement for tasks and invitations
-            invitations_result = self.admin_client.table("invitations").select("*, tasks:task_id (*)").eq("helper_id", helper_id).execute()
+            invitations_result = (
+                self.admin_client
+                    .table("invitations")
+                    .select("*, tasks:task_id (*, client:client_id (*))")
+                    .eq("helper_id", helper_id)
+                    .execute()
+                )
+
             if not invitations_result.data:
                 return InvitationListResponse(invitations=[], total_count=0)
             
