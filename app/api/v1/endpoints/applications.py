@@ -66,6 +66,7 @@ async def get_applications_by_helper(
     except HTTPException:
         raise
     except Exception as e:
+        print(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get helper applications: {str(e)}",
