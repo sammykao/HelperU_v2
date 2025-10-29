@@ -310,8 +310,6 @@ class TaskService:
                 .execute()
             )
 
-            print(result.data)
-
             if not result or not result.data:
                 return PublicTaskResponse(
                     result=[],

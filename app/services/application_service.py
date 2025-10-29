@@ -73,13 +73,22 @@ class ApplicationService:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     async def get_applications_by_helper(self, helper_id: str) -> ApplicationListResponse:
+         
         """Get all applications submitted by the current helper user"""
         try:
 
             # Join statement for tasks and applications
-            applications_result = self.admin_client.table("applications").select("*, tasks:task_id (*)").eq("helper_id", helper_id).execute()
+            applications_result = (self.admin_client
+                .table("applications")
+                .select("*, tasks:task_id (*, client:client_id (*))")
+                .eq("helper_id", helper_id)
+                .execute()
+            )
+
+            print(applications_result)
             if not applications_result.data:
                 return ApplicationListResponse(applications=[], total_count=0)
+
             
             helper = await self.helper_service.get_helper(helper_id)
             applications = [
@@ -92,6 +101,7 @@ class ApplicationService:
             ]
             return ApplicationListResponse(applications=applications, total_count=len(applications))
         except Exception as e:
+            print(e)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
     async def create_application(self, helper_id: str, task_id: str, application_create_request: ApplicationCreateRequest) -> ApplicationResponse:
