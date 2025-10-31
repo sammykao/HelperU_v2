@@ -101,7 +101,6 @@ class ApplicationService:
             ]
             return ApplicationListResponse(applications=applications, total_count=len(applications))
         except Exception as e:
-            print(e)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
     async def create_application(self, helper_id: str, task_id: str, application_create_request: ApplicationCreateRequest) -> ApplicationResponse:
@@ -174,6 +173,7 @@ class ApplicationService:
                 helper=HelperResponse(**application_result.data[0]["helpers"])
             )
         except Exception as e:
+            print(e)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 

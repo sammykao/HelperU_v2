@@ -247,6 +247,15 @@ class AuthService:
             normalized_phone = self._normalize_phone(phone)
 
             is_valid, error_msg = validate_phone_number(normalized_phone)
+
+            # check for a phone testing account
+            # for example Apple testing account phone: +1-555-555-5555
+            # corresponds to OTP code 123456
+            if normalized_phone == "15555555555":
+                return OTPResponse(
+                    success=True, message="testing account login detected"
+                )
+
             if not is_valid:
                 raise HTTPException(
                     status_code=400, detail=f"Invalid phone number: {error_msg}"
@@ -321,6 +330,64 @@ class AuthService:
             # Normalize phone number for consistent processing
             normalized_phone = self._normalize_phone(phone)
 
+            if normalized_phone == "15555555555" and token == "123456":
+                email = "tester@apple.com"
+                response = self.public_client.auth.sign_in_with_password(
+                    credentials={
+                        "phone": normalized_phone,
+                        "password": "somethingSuperSecure",
+                    }
+                )
+
+                helper_exist_check = (
+                    self.admin_client.table("helpers")
+                    .select("id")
+                    .eq("id", response.user.id)
+                    .execute()
+                )
+
+                if len(helper_exist_check.data) == 0:
+                    print("testing user does not exist, creating account")
+
+                    testing_profile = {
+                        "id": response.user.id,
+                        "email": email,
+                        "phone": normalized_phone,
+                        "first_name": "Tester",
+                        "last_name": "Apple",
+                        "pfp_url": "",
+                        "college": "Apple University",
+                        "bio": "This is a testing account for apple testers only, do not invite this account for tasks",
+                        "graduation_year": 2026,
+                        "zip_code": "02155",
+                    }
+
+                    result = (
+                        self.admin_client.table("helpers")
+                        .insert(testing_profile)
+                        .execute()
+                    )
+
+                    if not result:
+                        raise HTTPException(
+                            status_code=500,
+                            detail="Failed to create helper testing acconut",
+                        )
+
+                return HelperProfileResponse(
+                    success=True,
+                    message="testing user session",
+                    user_id=response.user.id,
+                    access_token=response.session.access_token,
+                    refresh_token=response.session.refresh_token,
+                )
+
+            if normalized_phone == "15555555555" and token != "123456":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Got known tester account but incorrect OTP code",
+                )
+
             # Verify OTP
             auth_response = self.public_client.auth.verify_otp(
                 {
@@ -377,6 +444,7 @@ class AuthService:
                     detail="Too many OTP attempts. Please wait before trying again.",
                 )
             else:
+                print(exc)
                 raise HTTPException(
                     status_code=400, detail=f"Failed to verify OTP: {error_msg}"
                 )
@@ -412,7 +480,7 @@ class AuthService:
                     "graduation_year": payload.graduation_year,
                     "zip_code": payload.zip_code,
                     "pfp_url": payload.pfp_url,
-                    "venmo": payload.venmo
+                    "venmo": payload.venmo,
                 }
             ).execute()
 
@@ -584,4 +652,3 @@ class AuthService:
             raise HTTPException(
                 status_code=500, detail=f"Failed to check helper existence: {str(exc)}"
             )
-
