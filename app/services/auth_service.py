@@ -545,6 +545,7 @@ class AuthService:
             )
         except Exception as exc:
             error_msg = str(exc)
+            print(error_msg)
             if "rate limit" in error_msg.lower():
                 raise HTTPException(
                     status_code=429,
