@@ -554,12 +554,13 @@ class AuthService:
         """Update helper email"""
         try:
             self.admin_client.auth.admin.update_user_by_id(user_id, {"email": email})
-            result = await self.resend_email_verification(email)
-            if not result.success:
-                raise HTTPException(
-                    status_code=500, detail="Failed to resend email verification"
-                )
-            return result
+            # in theory, supabase will automatically send an email verification link
+            self.public_client.auth.sign_in_with_otp({
+                "email": email
+            })
+            return OTPResponse(
+                success=True, message="Email verification link sent successfully"
+            )
         except Exception as exc:
             raise HTTPException(
                 status_code=500, detail=f"Failed to update helper email: {str(exc)}"
