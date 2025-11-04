@@ -538,7 +538,12 @@ class AuthService:
         """Resend email verification link"""
         try:
             # Use Supabase's resend method for email verification
-            self.public_client.auth.resend({"type": "signup", "email": email})
+            # self.public_client.auth.resend({"type": "signup", "email": email})
+
+            # try this to mitigate issue with mobile sign ups.
+            self.public_client.auth.sign_in_with_otp({
+                "email": email
+            })
 
             return OTPResponse(
                 success=True, message="Email verification link resent successfully"
