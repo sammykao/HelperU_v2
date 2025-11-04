@@ -623,7 +623,6 @@ class AuthService:
         """Update helper email"""
         try:
             self.admin_client.auth.admin.update_user_by_id(user_id, {"email": email})
-            # in theory, supabase will automatically send an email verification link
             self.public_client.auth.sign_in_with_otp({
                 "email": email
             })
