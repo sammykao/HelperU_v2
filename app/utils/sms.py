@@ -154,7 +154,7 @@ Reply in the HelperU app to continue the conversation."""
         notification: InvitationNotification
     ) -> OpenPhoneMessageResponse:
         """Send notification when a helper is invited to a task"""
-        content = f"""📝 New Invitation to apply to a task!
+        content = f"""📝 A client has invited you to apply to a task!
 
 Task: {notification.task_title}
 Client: {notification.client_name}
