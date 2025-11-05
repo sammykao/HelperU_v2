@@ -534,6 +534,7 @@ class AuthService:
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"Failed to logout: {str(exc)}")
 
+    
     async def resend_email_verification(self, email: str) -> OTPResponse:
         """Resend email verification link"""
         try:

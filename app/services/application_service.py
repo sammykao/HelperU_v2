@@ -250,7 +250,7 @@ class ApplicationService:
             if not invitation.data:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create invitation")
             
-            asyncio.create_task(self.send_invitation_notification(client_id=task.client_id, helper_id=helper_id, task_title=task.title, task_id=task_id))
+            asyncio.create_task(self.send_invitation_notification(client_id=task.client_id, helper_id=helper_id, task_title=task.title, task_id=task_id, pay=task.hourly_rate))
             # Return the invitation
             return InvitationResponse(**invitation.data[0])
         except Exception as e:
@@ -263,14 +263,14 @@ class ApplicationService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
         await self.smser.send_application_received_notification(ApplicationReceivedNotification(client_phone=client.data[0]["phone"], helper_name=helper_name, task_title=task_title, task_id=task_id))
     
-    async def send_invitation_notification(self, client_id: str, helper_id: str, task_title: str, task_id: str) -> None:
+    async def send_invitation_notification(self, client_id: str, helper_id: str, task_title: str, task_id: str, pay: float) -> None:
         """Send invitation notification"""
         #create a client helper join request
         client = self.admin_client.table("clients").select("*").eq("id", client_id).execute()
         helper = self.admin_client.table("helpers").select("*").eq("id", helper_id).execute()
         if not client.data or not helper.data:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
-        await self.smser.send_invitation_notification(InvitationNotification(client_name=client.data[0]["first_name"] + " " + client.data[0]["last_name"], helper_phone=helper.data[0]["phone"], task_title=task_title, task_id=task_id))
+        await self.smser.send_invitation_notification(InvitationNotification(client_name=client.data[0]["first_name"] + " " + client.data[0]["last_name"], helper_phone=helper.data[0]["phone"], task_title=task_title, task_id=task_id, pay=pay))
 
 # from supabase import Client
 # from app.schemas.applications import (

@@ -132,6 +132,7 @@ class InvitationNotification(BaseModel):
     client_name: str = Field(..., description="Name of the client")
     task_title: str = Field(..., description="Title of the task")
     task_id: Optional[str] = Field(None, description="Task ID")
+    pay: Optional[float] = Field(None, description="Pay per hour")
 
 # Union type for all notification models
 NotificationRequest = (

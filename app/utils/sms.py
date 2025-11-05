@@ -158,6 +158,7 @@ Reply in the HelperU app to continue the conversation."""
 
 Task: {notification.task_title}
 Client: {notification.client_name}
+Pay: ${notification.pay} per hour
 
 Visit HelperU or open the app to go view the post they invited you to.
         """
