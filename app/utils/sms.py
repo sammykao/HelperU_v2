@@ -124,9 +124,11 @@ View details in the HelperU app or website."""
         content = f"""📝 New Application Received!
 
 Helper: {notification.helper_name}
-Task: {notification.task_title}"""
-        if notification.task_id:
-            content += f"\nView it here: https://helperu.com/tasks/browse/{notification.task_id}"
+Task: {notification.task_title}
+
+To view the Helpers contact information, visit the HelperU website, go to my posts page, click on your post, and click the  "Show Contact Details" button."""
+        # if notification.task_id:
+        #     content += f"\nView it here: https://helperu.com/tasks/browse/{notification.task_id}"
 
 
         return self._send_sms([notification.client_phone], content)
@@ -157,10 +159,10 @@ Reply in the HelperU app to continue the conversation."""
 Task: {notification.task_title}
 Client: {notification.client_name}
 
-Visit HelperU or open the app to accept view the post they invited you to.
+Visit HelperU or open the app to go view the post they invited you to.
         """
-        if notification.task_id:
-            content += f"\nView it here: https://helperu.com/tasks/browse/{notification.task_id}"
+        # if notification.task_id:
+        #     content += f"\nView it here: https://helperu.com/tasks/browse/{notification.task_id}"
         return self._send_sms([notification.helper_phone], content)
     
     async def send_welcome_message(
