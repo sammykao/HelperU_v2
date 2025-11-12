@@ -158,3 +158,24 @@ class PublicTaskResponse(BaseModel):
     result: List[PublicTask]
     limit: int
     total_count: int
+
+class GetZipCodesRequest(BaseModel):
+    """Request model for getting zip codes"""
+
+    zip_codes: List[str]
+
+
+class PublicTaskZipCode(BaseModel):
+    """Response model for a public facing task zip code"""
+
+    zip_code: str
+    city: str
+    state: str
+    lat: float
+    lng: float
+
+class PublicTaskZipCodeResponse(BaseModel):
+    """Response model for a list of public facing tasks"""
+
+    result: List[PublicTaskZipCode]
+

@@ -9,6 +9,8 @@ from app.schemas.task import (
     TaskSearchRequest,
     TaskSearchListResponse,
     PublicTaskResponse,
+    PublicTaskZipCodeResponse,
+    GetZipCodesRequest,
 )
 from app.schemas.auth import CurrentUser
 
@@ -183,4 +185,21 @@ async def complete_task(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to complete task: {str(e)}",
+        )
+
+
+@router.post("/get_zip_codes", response_model=PublicTaskZipCodeResponse)
+async def get_zip_codes(
+    zip_codes: GetZipCodesRequest,
+    task_service: TaskService = Depends(get_task_service),
+):
+    """Get zip codes for public facing tasks"""
+    try:
+        return await task_service.get_zip_codes(zip_codes)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get zip codes: {str(e)}",
         )

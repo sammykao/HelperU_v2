@@ -14,7 +14,11 @@ from app.schemas.task import (
     PublicTask,
     PublicTaskResponse,
     ClientInfo,
+    GetZipCodesRequest,
+    PublicTaskZipCodeResponse,
+    PublicTaskZipCode,
 )
+
 
 from app.schemas.sms import TaskCreationNotification
 from app.services.stripe_service import StripeService
@@ -345,3 +349,27 @@ class TaskService:
             raise HTTPException(
                 status_code=500, detail=f"Failed to fetch available tasks: {str(e)}"
             )
+
+    async def get_zip_codes(self, zip_codes: GetZipCodesRequest) -> Optional[PublicTaskZipCodeResponse]:
+        try:
+            # batch query all zip codes from request
+            result = self.admin_client.table("zip_codes").select("*").in_("zip_code", zip_codes.zip_codes).execute()
+            if not result.data:
+                return PublicTaskZipCodeResponse(
+                    result=[],
+                    limit=len(zip_codes.zip_codes),
+                    total_count=0,
+                )
+
+            zip_codes = [PublicTaskZipCode(**zip_code) for zip_code in result.data]
+            response = PublicTaskZipCodeResponse(result=zip_codes)
+
+            return response
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get zip codes: {str(e)}"
+            )
+        
