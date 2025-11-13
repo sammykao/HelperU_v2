@@ -19,6 +19,8 @@ from app.schemas.task import (
     PublicTaskZipCode,
 )
 
+import stripe
+
 
 from app.schemas.sms import TaskCreationNotification
 from app.services.stripe_service import StripeService
@@ -372,4 +374,15 @@ class TaskService:
             raise HTTPException(
                 status_code=500, detail=f"Failed to get zip codes: {str(e)}"
             )
-        
+    async def create_task_from_onetime_payment(self, payload: bytes, sig_header: str) -> TaskResponse:
+        """Create a task from a one-time payment"""
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            )
+            user_id = event.data.object.metadata.user_id
+            task_data = TaskCreate(**event.data.object.metadata.task_data)
+            result = await self.create_task(user_id, task_data)
+            return TaskResponse(**result)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to create task from one-time payment: {str(e)}")

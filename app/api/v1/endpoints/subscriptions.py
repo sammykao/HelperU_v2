@@ -1,13 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from app.deps.supabase import get_current_user, get_profile_service, get_stripe_service
+from app.deps.supabase import get_current_user, get_profile_service, get_stripe_service, get_task_service
 from app.schemas.subscription import (
     SubscriptionStatus,
     CreateSubscriptionRequest,
     CreateSubscriptionResponse,
-    CancelSubscriptionResponse
+    CancelSubscriptionResponse,
+    OnetimePaymentRequest
 )
+from app.schemas.task import TaskCreate
 from app.services.stripe_service import StripeService
 from app.schemas.auth import CurrentUser
+from app.services.task_service import TaskService
 
 router = APIRouter()
 
@@ -99,7 +102,8 @@ async def create_portal_session(
 @router.post("/webhook")
 async def stripe_webhook(
     request: Request,
-    stripe_service: StripeService = Depends(get_stripe_service)
+    stripe_service: StripeService = Depends(get_stripe_service),
+    task_service: TaskService = Depends(get_task_service)
 ):
     """Handle Stripe webhook events"""
     try:
@@ -113,8 +117,11 @@ async def stripe_webhook(
             )
         
         success = await stripe_service.handle_webhook(payload, sig_header)
-        
-        if success:
+
+        if success and success.action == "payment":
+            result = await task_service.create_task_from_onetime_payment(payload, sig_header)
+            return {"status": "success", "task_id": result.id}
+        elif success and success.action == "subscription":
             return {"status": "success"}
         else:
             raise HTTPException(
@@ -122,7 +129,35 @@ async def stripe_webhook(
                 detail="Webhook processing failed"
             )
     except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Webhook error: {str(e)}")
+
+@router.post("/create-onetime-payment-session")
+async def create_onetime_payment_session(
+    task_data: TaskCreate,
+    onetime_payment_request: OnetimePaymentRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    stripe_service: StripeService = Depends(get_stripe_service),
+    profile_service = Depends(get_profile_service)
+):
+    """Create a Stripe Checkout session for a one-time payment"""
+    try:
+        user_id = current_user.id
+        # Get user profile data for name
+        profile = await profile_service.get_client_profile(user_id)
+        email = current_user.email or profile.email or ""
+        # Ensure user has a subscription record in the database
+        if not await stripe_service.user_exists_in_subscriptions(user_id):
+            # Extract name from profile or use email as fallback
+            if profile and profile.first_name and profile.last_name:
+                name = f"{profile.first_name} {profile.last_name}".strip()
+            else:
+                name = email.split("@")[0] if email else "User"
+            await stripe_service.create_customer(user_id, email, name)
+        
+        checkout_url = await stripe_service.create_onetime_payment_session(user_id, onetime_payment_request.price_id, task_data)
+        return {"checkout_url": checkout_url}
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Webhook error: {str(e)}"
+            detail=f"Failed to create one-time payment session: {str(e)}"
         )

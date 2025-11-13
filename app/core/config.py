@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     STRIPE_PUBLISHABLE_KEY: str
     STRIPE_WEBHOOK_SECRET: str
     STRIPE_PREMIUM_PRICE_ID: str
+    STRIPE_ONE_TIME_POST_PRICE_ID: str
 
     # Frontend Configuration
     FRONTEND_URL: str

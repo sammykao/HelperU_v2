@@ -3,12 +3,13 @@ from app.core.config import settings
 from supabase import Client
 from fastapi import HTTPException
 from datetime import datetime
-
+from typing import Optional
 from app.schemas.subscription import (
     SubscriptionStatus,
     CreateSubscriptionResponse,
     WebhookResult
 )
+from app.schemas.task import TaskCreate
 
 # Initialize Stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -17,7 +18,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 class StripeService:
     def __init__(self, admin_client: Client):
         self.admin_client = admin_client
-    
+
     def _convert_timestamp_to_iso(self, timestamp) -> str:
         """Convert Unix timestamp to ISO format string"""
         try:
@@ -266,8 +267,16 @@ class StripeService:
                 "event_type": event.type,
                 "data": event.data.object
             }).execute()
+
             
-            if event.type == "checkout.session.completed":
+            if event.data.object.mode == "payment":
+                return WebhookResult(
+                    action="payment",
+                    success=True,
+                    event_id=event.id,
+                    event_type=event.type
+                )
+            elif event.type == "checkout.session.completed":
                 await self._handle_checkout_completed(event.data.object)
             elif event.type == "customer.subscription.created":
                 await self._handle_subscription_created(event.data.object)
@@ -279,8 +288,9 @@ class StripeService:
                 await self._handle_payment_succeeded(event.data.object)
             elif event.type == "invoice.payment_failed":
                 await self._handle_payment_failed(event.data.object)
-            
+
             return WebhookResult(
+                action="subscription",
                 success=True,
                 event_id=event.id,
                 event_type=event.type
@@ -322,10 +332,9 @@ class StripeService:
         try:
             # Get user_id from metadata
             user_id = session_data.metadata.get('user_id')
-            if not user_id:
-                print("No user_id in checkout session metadata")
+            if not user_id or session_data.mode == 'payment':
+                print("No user_id in checkout session metadata or payment mode is one time")
                 return
-            
             # Get subscription from session
             subscription_id = session_data.subscription
             if not subscription_id:
@@ -334,8 +343,6 @@ class StripeService:
             
             # Retrieve subscription details from Stripe
             subscription = stripe.Subscription.retrieve(subscription_id)
-            
-            # Update subscription in database
             period_start_iso = self._convert_timestamp_to_iso(subscription.current_period_start)
             period_end_iso = self._convert_timestamp_to_iso(subscription.current_period_end)
             
@@ -415,3 +422,41 @@ class StripeService:
         except Exception as e:
             print(f"Failed to handle payment failure: {str(e)}")
 
+    async def create_onetime_payment_session(self, user_id: str, price_id: str = None, task_data: Optional[TaskCreate] = None) -> str:
+        """Create a Stripe Checkout session for a one-time payment"""
+        try:
+            if not task_data:
+                raise HTTPException(status_code=400, detail="Task data is required")
+            # Get user's Stripe customer ID
+            result = self.admin_client.table("subscriptions").select("stripe_customer_id").eq("user_id", user_id).execute()
+            
+            if not result.data:
+                raise HTTPException(status_code=404, detail="User not found in subscriptions table")
+            
+            customer_id = result.data[0]["stripe_customer_id"]
+            
+            # Use provided price_id or default to premium price
+            subscription_price_id = price_id or settings.STRIPE_ONETIME_PAYMENT_PRICE_ID
+
+            # Create Stripe Checkout session
+            checkout_session = stripe.checkout.Session.create(
+                customer=customer_id,
+                payment_method_types=['card'],
+                line_items=[{
+                    'price': subscription_price_id,
+                    'quantity': 1,
+                }],
+                success_url=f'{settings.FRONTEND_URL}/onetime-payment/success?session_id={{CHECKOUT_SESSION_ID}}',
+                cancel_url=f'{settings.FRONTEND_URL}/onetime-payment/cancel',
+                mode='payment',
+                metadata={
+                    'user_id': user_id,
+                    'task_data': task_data.model_dump()
+                }
+            )
+
+            return checkout_session.url
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to create one-time payment session: {str(e)}")
+
+   

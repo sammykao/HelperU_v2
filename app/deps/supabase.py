@@ -114,8 +114,6 @@ def get_chat_service() -> ChatService:
     return ChatService(admin_client)
 
 
-
-
 def get_notifications_service() -> NotificationService:
     admin_client = get_supabase_admin()
     return NotificationService(admin_client)

@@ -70,7 +70,12 @@ class PostLimitInfo(BaseModel):
 
 class WebhookResult(BaseModel):
     """Result of webhook processing"""
+    action: str = Field(..., description="Action taken by the webhook")
     success: bool = Field(..., description="Whether webhook was processed successfully")
     event_id: str = Field(..., description="Stripe event ID")
     event_type: str = Field(..., description="Event type")
 
+
+class OnetimePaymentRequest(BaseModel):
+    """Request for a one-time payment"""
+    price_id: str = Field(..., description="Stripe price ID for the one-time payment")
