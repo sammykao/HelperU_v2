@@ -10,6 +10,8 @@ from app.schemas.task import TaskCreate
 from app.services.stripe_service import StripeService
 from app.schemas.auth import CurrentUser
 from app.services.task_service import TaskService
+from typing import Optional
+
 
 router = APIRouter()
 
