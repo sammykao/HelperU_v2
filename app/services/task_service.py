@@ -1,6 +1,7 @@
 from typing import Optional
 from supabase import Client
 from fastapi import HTTPException
+import json
 
 import asyncio
 from app.schemas.task import (
@@ -381,7 +382,9 @@ class TaskService:
                 payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
             )
             user_id = event.data.object.metadata.user_id
-            task_data = TaskCreate(**event.data.object.metadata.task_data)
+            # Parse JSON string from metadata back to dict before creating TaskCreate
+            task_data_dict = json.loads(event.data.object.metadata.task_data)
+            task_data = TaskCreate(**task_data_dict)
             result = await self.create_task(user_id, task_data)
             return TaskResponse(**result)
         except Exception as e:

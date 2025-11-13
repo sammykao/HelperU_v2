@@ -1,4 +1,5 @@
 import stripe
+import json
 from app.core.config import settings
 from supabase import Client
 from fastapi import HTTPException
@@ -439,6 +440,8 @@ class StripeService:
             subscription_price_id = price_id or settings.STRIPE_ONE_TIME_POST_PRICE_ID
 
             # Create Stripe Checkout session
+            # Convert task_data to JSON string for Stripe metadata (metadata values must be strings)
+            task_data_json = json.dumps(task_data.model_dump(), default=str)
             checkout_session = stripe.checkout.Session.create(
                 customer=customer_id,
                 payment_method_types=['card'],
@@ -451,7 +454,7 @@ class StripeService:
                 mode='payment',
                 metadata={
                     'user_id': user_id,
-                    'task_data': task_data.model_dump()
+                    'task_data': task_data_json
                 }
             )
 
