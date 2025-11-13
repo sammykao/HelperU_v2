@@ -5,7 +5,6 @@ from app.schemas.subscription import (
     CreateSubscriptionRequest,
     CreateSubscriptionResponse,
     CancelSubscriptionResponse,
-    OnetimePaymentRequest
 )
 from app.schemas.task import TaskCreate
 from app.services.stripe_service import StripeService
@@ -134,7 +133,7 @@ async def stripe_webhook(
 @router.post("/create-onetime-payment-session")
 async def create_onetime_payment_session(
     task_data: TaskCreate,
-    onetime_payment_request: OnetimePaymentRequest,
+    price_id: Optional[str] = None,
     current_user: CurrentUser = Depends(get_current_user),
     stripe_service: StripeService = Depends(get_stripe_service),
     profile_service = Depends(get_profile_service)
@@ -154,7 +153,7 @@ async def create_onetime_payment_session(
                 name = email.split("@")[0] if email else "User"
             await stripe_service.create_customer(user_id, email, name)
         
-        checkout_url = await stripe_service.create_onetime_payment_session(user_id, onetime_payment_request.price_id or None, task_data)
+        checkout_url = await stripe_service.create_onetime_payment_session(user_id, price_id, task_data)
         return {"checkout_url": checkout_url}
     except Exception as e:
         raise HTTPException(

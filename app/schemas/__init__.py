@@ -38,7 +38,9 @@ from .subscription import (
     SubscriptionData,
     SubscriptionEventData,
     PostLimitInfo,
-    WebhookResult
+    WebhookResult,
+    OnetimePaymentRequest,
+    OnetimePaymentResponse
 )
 
 from .task import (
