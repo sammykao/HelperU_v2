@@ -78,4 +78,4 @@ class WebhookResult(BaseModel):
 
 class OnetimePaymentRequest(BaseModel):
     """Request for a one-time payment"""
-    price_id: str = Field(..., description="Stripe price ID for the one-time payment")
+    price_id: Optional[str] = Field(None, description="Stripe price ID for the one-time payment (optional, defaults to STRIPE_ONE_TIME_POST_PRICE_ID)")

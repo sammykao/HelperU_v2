@@ -154,7 +154,7 @@ async def create_onetime_payment_session(
                 name = email.split("@")[0] if email else "User"
             await stripe_service.create_customer(user_id, email, name)
         
-        checkout_url = await stripe_service.create_onetime_payment_session(user_id, onetime_payment_request.price_id, task_data)
+        checkout_url = await stripe_service.create_onetime_payment_session(user_id, onetime_payment_request.price_id or None, task_data)
         return {"checkout_url": checkout_url}
     except Exception as e:
         raise HTTPException(

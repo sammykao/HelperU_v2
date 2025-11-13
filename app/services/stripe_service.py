@@ -436,7 +436,7 @@ class StripeService:
             customer_id = result.data[0]["stripe_customer_id"]
             
             # Use provided price_id or default to premium price
-            subscription_price_id = price_id or settings.STRIPE_ONETIME_PAYMENT_PRICE_ID
+            subscription_price_id = price_id or settings.STRIPE_ONE_TIME_POST_PRICE_ID
 
             # Create Stripe Checkout session
             checkout_session = stripe.checkout.Session.create(
