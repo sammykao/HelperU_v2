@@ -381,11 +381,26 @@ class TaskService:
             event = stripe.Webhook.construct_event(
                 payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
             )
-            user_id = event.data.object.metadata.user_id
+            client_id = event.data.object.metadata.user_id
+            if not client_id:
+                raise HTTPException(status_code=400, detail="Client ID is required")
             # Parse JSON string from metadata back to dict before creating TaskCreate
-            task_data_dict = json.loads(event.data.object.metadata.task_data)
-            task_data = TaskCreate(**task_data_dict)
-            result = await self.create_task(user_id, task_data)
-            return TaskResponse(**result)
+            task_payload = json.loads(event.data.object.metadata.task_data)
+            task_payload["client_id"] = client_id
+  
+            result = self.admin_client.table("tasks").insert(task_payload).execute()
+        
+            if not result.data:
+                raise HTTPException(status_code=500, detail="Failed to create task")
+
+            # Update client's post count (fire and forget) monthly and total
+            asyncio.create_task(self.update_client_post_count(client_id))
+            asyncio.create_task(self.emailer.send_task_notification_email(client.data[0]["email"], client.data[0]["first_name"], result.data[0]["title"], "task_created", result.data[0]["description"]))
+            asyncio.create_task(self.emailer.send_task_notification_email(settings.EMAIL_SENDER, client.data[0]["first_name"], result.data[0]["title"], "task_created", result.data[0]["description"]))
+            asyncio.create_task(self.smser.send_task_creation_notification(TaskCreationNotification(task_id=result.data[0]["id"], client_phone=client.data[0]["phone"], task_title=result.data[0]["title"], task_description=result.data[0]["description"])))
+            # Return the created task
+            created_task = result.data[0]
+            return TaskResponse(**created_task)
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to create task from one-time payment: {str(e)}")
