@@ -29,7 +29,7 @@ class HelperService:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No helpers found")
  
             helpers = [HelperResponse(**helper) for helper in helpers_result.data]
-            return HelperListResponse(helpers=helpers, total_count=len(helpers))
+            return HelperListResponse(helpers=helpers, total_count=len(helpers), limit=limit, offset=offset)
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 

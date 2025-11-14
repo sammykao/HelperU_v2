@@ -12,6 +12,7 @@ class ClientInfo(BaseModel):
     phone: str
     email: str
     pfp_url: Optional[str] = None
+    number_of_posts: Optional[int] = None
 
     # This will ignore extra fields not defined in the schema
     class Config:
@@ -59,7 +60,7 @@ class TaskSearchRequest(BaseModel):
     search_location_type: Optional[str] = Field(None, description="Filter by location type (remote, in_person, etc.)")
     min_hourly_rate: Optional[float] = Field(None, ge=0, description="Minimum hourly rate filter")
     max_hourly_rate: Optional[float] = Field(None, ge=0, description="Maximum hourly rate filter")
-    search_limit: int = Field(20, ge=1, le=100, description="Number of tasks to return")
+    search_limit: int = Field(20, ge=1, le=1000, description="Number of tasks to return")
     search_offset: int = Field(0, ge=0, description="Number of tasks to skip")
     sort_by: Optional[str] = Field('post_date', description="Sort mode: 'distance' or 'post_date'")
     distance_radius: Optional[float] = Field(100, ge=0, le=500, description="Distance radius in miles for distance sorting, default is 100 miles")

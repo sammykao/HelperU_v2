@@ -275,7 +275,8 @@ BEGIN
                 'last_name', c.last_name,
                 'phone', c.phone,
                 'email', c.email,
-                'pfp_url', c.pfp_url
+                'pfp_url', c.pfp_url,
+                'number_of_posts', c.number_of_posts
             ) AS client
         FROM public.tasks t
         LEFT JOIN public.zip_codes zc ON t.zip_code = zc.zip_code

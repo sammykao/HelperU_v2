@@ -40,9 +40,11 @@ async def get_helper(
 
 @router.get("/", response_model=HelperListResponse)
 async def get_helpers(
+    limit: int = 20,
+    offset: int = 0,
     helper_service: HelperService = Depends(get_helper_service),
 ) -> HelperListResponse:
     try:
-        return await helper_service.get_helpers()
+        return await helper_service.get_helpers(limit=limit, offset=offset)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
