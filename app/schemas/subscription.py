@@ -6,7 +6,7 @@ class SubscriptionStatus(BaseModel):
     """Current user's subscription status and post limits"""
     plan: str = Field(..., description="Subscription plan (free, basic, premium, enterprise)")
     status: str = Field(..., description="Subscription status (active, canceled, past_due, etc.)")
-    post_limit: int = Field(..., description="Monthly post limit (-1 for unlimited)")
+    post_limit: int = Field(..., description="User's posts remaining")
     posts_used: int = Field(..., description="Posts used this month")
 
 
@@ -63,8 +63,8 @@ class SubscriptionEventData(BaseModel):
 
 class PostLimitInfo(BaseModel):
     """Information about user's post limits"""
-    post_limit: int = Field(..., description="Monthly post limit (-1 for unlimited)")
-    posts_used: int = Field(..., description="Posts used this month")
+    post_limit: int = Field(..., description="User's post remaining (-1 for unlimited)")
+    posts_used: int = Field(..., description="Posts used total")
     can_post: bool = Field(..., description="Whether user can post more")
 
 

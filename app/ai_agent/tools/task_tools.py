@@ -584,7 +584,7 @@ async def get_remaining_post_limit(user_id: str) -> int:
         ...     print("You have reached your task posting limit")
     """
     try:
-        result = await stripe_service.get_monthly_post_limit(user_id)
+        result = await stripe_service.get_client_posts_remaining(user_id)
         return result
     except Exception as e:
         return HTTPException(status_code=500, detail=str(e))

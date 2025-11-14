@@ -197,15 +197,15 @@ class StripeService:
     async def get_subscription_status(self, user_id: str) -> SubscriptionStatus:
         """Get current subscription status for a user"""
         try:
-            post_limit = await self.get_monthly_post_limit(user_id)
-            posts_used = await self.get_monthly_post_count(user_id)
+            client_post_count = await self.get_client_post_count(user_id)
+            client_posts_remaining = await self.get_client_posts_remaining(user_id)
             result = self.admin_client.table("subscriptions").select("*").eq("user_id", user_id).execute()
             if not result.data:
                 return SubscriptionStatus(
                     plan="free",
                     status="active",
-                    post_limit=post_limit,
-                    posts_used=posts_used
+                    post_limit=client_posts_remaining,
+                    posts_used=client_post_count
                 )
             
             subscription = result.data[0]
@@ -213,30 +213,33 @@ class StripeService:
             return SubscriptionStatus(
                 plan=subscription["plan"],
                 status=subscription["status"],
-                post_limit=post_limit,
-                posts_used=posts_used
+                post_limit=client_posts_remaining,
+                posts_used=client_post_count
             )
         except HTTPException:
             raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to get subscription status: {str(e)}")
 
-    async def get_monthly_post_limit(self, user_id: str) -> int:
-        """Get remaining posts before reaching the limit for a user"""
-        try:
-            result = self.admin_client.rpc('get_user_post_limit', {'user_uuid': user_id}).execute()
-            return result.data
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to get user post limit: {str(e)}")
 
-    async def get_monthly_post_count(self, user_id: str) -> int:
-        """Get monthly post count for a user"""
+    async def get_client_post_count(self, user_id: str) -> int:
+        """Get client post count for a user"""
         try:
-            current_month = datetime.now().strftime("%Y-%m")
-            result = self.admin_client.table("monthly_post_counts").select("post_count").eq("user_id", user_id).eq("year_month", current_month).execute()
-            return result.data[0]["post_count"] if result.data else 0
+            result = self.admin_client.table("clients").select("number_of_posts").eq("id", user_id).execute()
+            return result.data[0]["number_of_posts"] if result.data else 0
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to get user post count: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to get client post count: {str(e)}")
+
+    async def get_client_posts_remaining(self, user_id: str) -> int:
+        """Get client posts remaining for a user"""
+        try:
+            client_post_count = await self.get_client_post_count(user_id)
+            plan = self.admin_client.table("subscriptions").select("plan").eq("user_id", user_id).execute()
+            if plan.data and plan.data[0]["plan"] == "premium":
+                return -1 # Unlimited posts for premium users
+            return 1 - client_post_count
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to get client posts remaining: {str(e)}")
 
     async def user_exists_in_subscriptions(self, user_id: str) -> bool:
         """Check if user exists in subscriptions table"""
@@ -245,14 +248,6 @@ class StripeService:
             return len(result.data) > 0
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to check user subscription: {str(e)}")
-
-    async def update_monthly_post_count(self, user_id: str) -> bool:
-        """Update monthly post count for a user"""
-        try:
-            self.admin_client.rpc('increment_monthly_post_count', {'user_uuid': user_id}).execute()
-            return True
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to update user post count: {str(e)}")
 
 
     async def handle_webhook(self, payload: bytes, sig_header: str) -> WebhookResult:

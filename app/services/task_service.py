@@ -49,10 +49,10 @@ class TaskService:
                 raise HTTPException(status_code=404, detail="Client not found")
 
             # Check if user has reached post limit
-            post_limit = await self.stripe_service.get_monthly_post_limit(client_id)
-            if post_limit < 1:
+            client_posts_remaining = await self.stripe_service.get_client_posts_remaining(client_id)
+            if client_posts_remaining < 1:
                 raise HTTPException(
-                    status_code=400, detail="User has reached post limit."
+                    status_code=400, detail="Client has reached post limit."
                 )
 
             task_payload = request.model_dump()
@@ -69,8 +69,7 @@ class TaskService:
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to create task")
 
-            # Update client's post count (fire and forget) monthly and total
-            asyncio.create_task(self.stripe_service.update_monthly_post_count(client_id))
+            # Update client's post count (fire and forget) and notify people
             asyncio.create_task(self.update_client_post_count(client_id))
             asyncio.create_task(self.emailer.send_task_notification_email(client.data[0]["email"], client.data[0]["first_name"], result.data[0]["title"], "task_created", result.data[0]["description"]))
             asyncio.create_task(self.emailer.send_task_notification_email(settings.EMAIL_SENDER, client.data[0]["first_name"], result.data[0]["title"], "task_created", result.data[0]["description"]))
@@ -393,7 +392,7 @@ class TaskService:
             if not result.data:
                 raise HTTPException(status_code=500, detail="Failed to create task")
 
-            # Update client's post count (fire and forget) monthly and total
+            # Update client's post count (fire and forget)
             asyncio.create_task(self.update_client_post_count(client_id))
             asyncio.create_task(self.emailer.send_task_notification_email(client.data[0]["email"], client.data[0]["first_name"], result.data[0]["title"], "task_created", result.data[0]["description"]))
             asyncio.create_task(self.emailer.send_task_notification_email(settings.EMAIL_SENDER, client.data[0]["first_name"], result.data[0]["title"], "task_created", result.data[0]["description"]))
